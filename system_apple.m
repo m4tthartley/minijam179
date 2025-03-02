@@ -57,23 +57,8 @@ extern sys_t sys;
 	return self;
 }
 
-@end
-
-@interface AppDelegate : NSObject <NSWindowDelegate>
-@end
-@implementation AppDelegate
-
 - (BOOL) acceptsFirstResponder {
 	return YES;
-}
-
-- (void) windowWillClose: (NSNotification*) notification {
-	print("Window close requested");
-	exit(1);
-}
-
-- (void) applicationDidFinishLaunching:(NSNotification*)notification {
-	print("applicationDidFinishLaunching");
 }
 
 - (void) keyDown: (NSEvent*) event {
@@ -86,6 +71,21 @@ extern sys_t sys;
 	assert(event.keyCode < array_size(video.keyboard));
 	_update_button(&video.keyboard[event.keyCode], FALSE);
 } 
+
+@end
+
+@interface AppDelegate : NSObject <NSWindowDelegate>
+@end
+@implementation AppDelegate
+
+- (void) windowWillClose: (NSNotification*) notification {
+	print("Window close requested");
+	exit(1);
+}
+
+- (void) applicationDidFinishLaunching:(NSNotification*)notification {
+	print("applicationDidFinishLaunching");
+}
 
 @end
 
@@ -316,6 +316,15 @@ SYS_FUNC void Sys_PollEvents() {
 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 	// NSApplication* app = video.app;
 
+	// zero_memory(&video.keyboard, sizeof(video.keyboard));
+	// zero_memory(&video.mouse, sizeof(video.mouse));
+	FOR (i, array_size(video.keyboard)) {
+		_update_button(video.keyboard+i, video.keyboard[i].down);
+	}
+
+	_update_button(&video.mouse.left, video.mouse.left.down);
+	_update_button(&video.mouse.right, video.mouse.right.down);
+
 	NSEvent* event;
 	while ((event = [state->app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
 		// print("event %i", event.type);
@@ -333,8 +342,31 @@ SYS_FUNC void Sys_PollEvents() {
 			_update_button(&video.keyboard[event.keyCode], FALSE);
 			print("button press");
 		}
+
+		if (event.type == NSEventTypeLeftMouseDown) {
+			print("mouse press");
+			_update_button(&video.mouse.left, TRUE);
+		}
+		if (event.type == NSEventTypeLeftMouseUp) {
+			print("mouse press");
+			_update_button(&video.mouse.left, FALSE);
+		}
+		if (event.type == NSEventTypeRightMouseDown) {
+			print("mouse press");
+			_update_button(&video.mouse.left, TRUE);
+		}
+		if (event.type == NSEventTypeRightMouseUp) {
+			print("mouse press");
+			_update_button(&video.mouse.left, FALSE);
+		}
 		
 		[state->app sendEvent: event];
 		[state->app updateWindows];
 	}
+
+	NSPoint mousePos = [NSEvent mouseLocation];
+	// mousePos = [state->window convertScreenToBase: mousePos]; // needed for old mac versions
+	mousePos = [state->window convertPointFromScreen: mousePos];
+	video.mouse.pos.x = mousePos.x;
+	video.mouse.pos.y = mousePos.y;
 }

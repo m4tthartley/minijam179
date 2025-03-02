@@ -6,6 +6,7 @@
 //
 
 #include <core/core.h>
+#include <core/core.c>
 
 #include "game.h"
 #include "system.h"
@@ -46,12 +47,14 @@ extern video_t video;
 // #ifdef HOTRELOAD
 // hotreload_t hotreload;
 int main() {
-	G_Init();
+	// G_Init();
 	// hotreload_run("game");
-	reload_register_state("sys", &sys, sizeof(sys));
-	reload_register_state("video", &video, sizeof(video));
+	reload_register_state("sys", /*&sys, sizeof(sys)*/ NULL, sizeof(sys));
+	reload_register_state("video", /*&video, sizeof(video)*/ NULL, sizeof(video));
 	reload_init("build/game");
-	while (sys.running) {
+
+	reload_run_func("G_Init", NULL);
+	while (/*sys.running*/TRUE) {
 		// if (hotreload.active && hotreload.reload()) {
 		// 	return 0;
 		// }

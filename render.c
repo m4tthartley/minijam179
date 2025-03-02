@@ -199,27 +199,35 @@ R_FUNC void R_BlitBitmap(bitmap_t* bitmap, vec2_t pos) {
 	}
 }
 
-R_FUNC b32 R_Clip(int2_t* pos, int2_t* size) {
-	if (pos->x >= video.framebufferSize.x ||
-		pos->x+size->x < 0 ||
-		pos->y >= video.framebufferSize.y ||
-		pos->y+size->y < 0) {
+R_FUNC b32 R_Clip(int4_t* clipRect) {
+	if (clipRect->left >= video.framebufferSize.x ||
+		clipRect->right < 0 ||
+		clipRect->bottom >= video.framebufferSize.y ||
+		clipRect->top < 0) {
 		// cull
 		return TRUE;
 	}
-	if (pos->x < 0) {
-		size->x -= pos->x;
-		pos->x = 0;
+	if (clipRect->left < 0) {
+		// size->x -= clipRect->left;
+		// clipRect->left = 0;
+		// clipRect->left = abs(clipRect->left);
+		clipRect->left = 0;
 	}
-	if (pos->y < 0) {
-		size->y -= pos->y;
-		pos->y = 0;
+	if (clipRect->bottom < 0) {
+		// size->y -= clipRect->bottom;
+		// clipRect->bottom = 0;
+		// clipOffset->bottom = abs(clipRect->bottom);
+		clipRect->bottom = 0;
 	}
-	if ((pos->x+size->x) >= video.framebufferSize.x) {
-		size->x = video.framebufferSize.x - pos->x;
+	if (clipRect->right >= video.framebufferSize.x) {
+		// size->x = video.framebufferSize.x - clipRect->left;
+		// clipOffset->right = -(clipRect->left+size->x - video.framebufferSize.x);
+		clipRect->right = video.framebufferSize.x;
 	}
-	if ((pos->y+size->y) >= video.framebufferSize.y) {
-		size->y = video.framebufferSize.y - pos->y;
+	if ((clipRect->top) >= video.framebufferSize.y) {
+		// size->y = video.framebufferSize.y - clipRect->bottom;
+		// clipOffset->top = -(clipRect->bottom+size->y - video.framebufferSize.y);
+		clipRect->top = video.framebufferSize.y;
 	}
 
 	return FALSE;
@@ -228,16 +236,31 @@ R_FUNC b32 R_Clip(int2_t* pos, int2_t* size) {
 R_FUNC void R_BlitBitmapAtlas(bitmap_t* bitmap, int atlasX, int atlasY, int width, int height, vec2_t pos) {
 	int2_t screenPos = R_ConvertPointToScreenSpace(pos);
 	int2_t size = {width, height};
-	if (R_Clip(&screenPos, &size)) {
+	int4_t clip = {screenPos.x, screenPos.y, screenPos.x+size.x, screenPos.y+size.y};
+	int4_t originalClip = clip;
+	if (R_Clip(&clip)) {
 		return;
 	}
+	int4_t clipDiff = idiff4(originalClip, clip);
+	if (clip.right != screenPos.x+size.x) {
+		int x=0;
+	}
+	int4_t texelClip = {atlasX, atlasY, atlasX+width, atlasY+height};
+	FOR (i, 4) texelClip.i[i] += clipDiff.i[i];
+
 	u32* fb = video.framebuffer;
-	FOR (y, size.y)
-	FOR (x, size.x) {
-		int fbIndex = (screenPos.y+y)*video.framebufferSize.x + (screenPos.x+x);
-		u32 texel = bitmap->data[(atlasY+y)*bitmap->width+(atlasX+x)];
-		if (texel) {
-			fb[fbIndex] = texel;
+	// FOR (y, size.y+clipOffset.top)
+	// FOR (x, size.x+clipOffset.right) {
+	int2_t texelPos = texelClip.xy;
+	for (int y=0; y<(clip.top-clip.bottom); ++y) {
+		for (int x=0; x<(clip.right-clip.left); ++x) {
+			int fbIndex = (clip.bottom+y)*video.framebufferSize.x + (clip.left+x);
+			u32 texel = bitmap->data[(texelPos.y+y)*bitmap->width+(texelPos.x+x)];
+			if (texel) {
+				fb[fbIndex] = texel;
+			}
+			// ++texelPos.x;
 		}
+		// ++texelPos.y;
 	}
 }
