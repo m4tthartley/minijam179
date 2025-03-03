@@ -23,11 +23,5 @@
     <string>????</string>
     <key>LSRequiresIPhoneOS</key>
     <false/>
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-	<key>StandardOutput</key>
-	<string>/tmp/minijam179_stdout.log</string>
-	<key>StandardError</key>
-	<string>/tmp/minijam179_stderr.log</string>
 </dict>
 </plist>

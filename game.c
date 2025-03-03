@@ -92,8 +92,8 @@ void G_Init() {
 	sys.assetMemory = virtual_heap_allocator(MB(10), NULL);
 	sys.scratchBuffer = virtual_bump_allocator(MB(1), NULL);
 
-	sys.testBitmap = LoadBitmap(&sys.assetMemory, "assets/test.bmp");
-	sys.mapBitmap = LoadBitmap(&sys.assetMemory, "assets/map.bmp");
+	sys.testBitmap = LoadBitmap(&sys.assetMemory, Sys_GetResourcePath(NULL, "assets/test.bmp"));
+	sys.mapBitmap = LoadBitmap(&sys.assetMemory, Sys_GetResourcePath(NULL, "assets/map.bmp"));
 
 	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
 
@@ -102,7 +102,7 @@ void G_Init() {
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
-		float height = fbm(vec2((float)x*0.05f + 1.0f, (float)y*0.05f + 1.0f)) * 20.0f;
+		float height = fbm(vec2((float)x*0.05f + 1.0f, (float)y*0.05f + 1.0f)) * 40.0f;
 		sys.map[y*MAP_SIZE+x].pos = int2(x, y);
 		sys.map[y*MAP_SIZE+x].height = height;
 

@@ -5,11 +5,15 @@
 //  Copyright 2025 GiantJelly. All rights reserved.
 //
 
+#include <CoreFoundation/CoreFoundation.h>
 #include <core/core.h>
 #include <core/core.c>
 
+#include "core/platform.h"
 #include "game.h"
 #include "system.h"
+
+#include "system_resource.c"
 
 #define CORE_IMPL
 #include <core/hotreload.h>
@@ -44,14 +48,30 @@ extern video_t video;
 // }
 #endif
 
+
 // #ifdef HOTRELOAD
 // hotreload_t hotreload;
 int main() {
+#ifdef __RELEASE__
+	CFBundleRef bundle = CFBundleGetMainBundle();
+	CFURLRef bundleUrl = CFBundleCopyBundleURL(bundle);
+	char bundlePath[MAX_PATH_LENGTH];
+	CFURLGetFileSystemRepresentation(bundleUrl, true, (UInt8*)bundlePath, MAX_PATH_LENGTH);
+	print("Bundle path: %s", bundlePath);
+	char logPath[MAX_PATH_LENGTH];
+	copy_memory(logPath, bundlePath, MAX_PATH_LENGTH);
+	char_append(logPath, "/stdout.log", MAX_PATH_LENGTH);
+	FILE* stdoutFile = freopen(logPath, "w", stdout);
+	// FILE* stderrFile = freopen(logPath, "w", stderr);
+#endif
+	Sys_GetResourcePath(NULL, "stdout.log");
+
 	// G_Init();
 	// hotreload_run("game");
 	reload_register_state("sys", /*&sys, sizeof(sys)*/ NULL, sizeof(sys));
 	reload_register_state("video", /*&video, sizeof(video)*/ NULL, sizeof(video));
-	reload_init("./game");
+	char* gameSoPath = Sys_GetResourcePath(NULL, "game.so");
+	reload_init(gameSoPath);
 
 	reload_run_func("G_Init", NULL);
 	while (/*sys.running*/TRUE) {

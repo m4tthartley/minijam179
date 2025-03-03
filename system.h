@@ -144,5 +144,6 @@ SYS_FUNC void Sys_PollEvents();
 SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
 SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);
 SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData);
+char* Sys_GetResourcePath(allocator_t* allocator, char* filename);
 
 #endif

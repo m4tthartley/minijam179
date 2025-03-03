@@ -16,6 +16,10 @@ bitmap_t* LoadBitmap(allocator_t* allocator, char* filename) {
 	// int rowSize;
 	
 	file_t file = file_open(filename);
+	if (file == -1) {
+		print("Failed to load bitmap: %s", filename);
+		return NULL;
+	}
 	stat_t fileinfo = file_stat(file);
 	int fileSize = fileinfo.size;
 	void* fileData = alloc_memory(allocator, fileSize);

@@ -9,3 +9,4 @@ mkdir -p ./build/minijam179.app
 cp ./build/jam ./build/minijam179.app/minijam179
 cp ./build/game.so ./build/minijam179.app/game.so
 cp ./Info.plist ./build/minijam179.app/Info.plist
+cp -r ./assets ./build/minijam179.app/assets
