@@ -1,0 +1,33 @@
+<!--
+  Created by Matt Hartley on 03/03/2025.
+  Copyright 2025 GiantJelly. All rights reserved.
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>net.giantjelly.minijam179</string>
+    <key>CFBundleName</key>
+    <string>Mini Jam 179</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleExecutable</key>
+    <string>minijam179</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>LSRequiresIPhoneOS</key>
+    <false/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+	<key>StandardOutput</key>
+	<string>/tmp/minijam179_stdout.log</string>
+	<key>StandardError</key>
+	<string>/tmp/minijam179_stderr.log</string>
+</dict>
+</plist>

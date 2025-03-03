@@ -51,7 +51,7 @@ int main() {
 	// hotreload_run("game");
 	reload_register_state("sys", /*&sys, sizeof(sys)*/ NULL, sizeof(sys));
 	reload_register_state("video", /*&video, sizeof(video)*/ NULL, sizeof(video));
-	reload_init("build/game");
+	reload_init("./game");
 
 	reload_run_func("G_Init", NULL);
 	while (/*sys.running*/TRUE) {

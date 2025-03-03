@@ -62,14 +62,14 @@ extern sys_t sys;
 }
 
 - (void) keyDown: (NSEvent*) event {
-	assert(event.keyCode < array_size(video.keyboard));
-	_update_button(&video.keyboard[event.keyCode], TRUE);
-	print("button press");
+	// assert(event.keyCode < array_size(video.keyboard));
+	// _update_button(&video.keyboard[event.keyCode], TRUE);
+	// print("button press");
 }
 
 - (void) keyUp: (NSEvent*) event {
-	assert(event.keyCode < array_size(video.keyboard));
-	_update_button(&video.keyboard[event.keyCode], FALSE);
+	// assert(event.keyCode < array_size(video.keyboard));
+	// _update_button(&video.keyboard[event.keyCode], FALSE);
 } 
 
 @end
@@ -335,28 +335,23 @@ SYS_FUNC void Sys_PollEvents() {
 		if (event.type == NSEventTypeKeyDown) {
 			assert(event.keyCode < array_size(video.keyboard));
 			_update_button(&video.keyboard[event.keyCode], TRUE);
-			print("button press");
+			// print("key state %i %i %i", video.keyboard[event.keyCode].down, video.keyboard[event.keyCode].pressed, video.keyboard[event.keyCode].released);
 		}
 		if (event.type == NSEventTypeKeyUp) {
 			assert(event.keyCode < array_size(video.keyboard));
 			_update_button(&video.keyboard[event.keyCode], FALSE);
-			print("button press");
 		}
 
 		if (event.type == NSEventTypeLeftMouseDown) {
-			print("mouse press");
 			_update_button(&video.mouse.left, TRUE);
 		}
 		if (event.type == NSEventTypeLeftMouseUp) {
-			print("mouse press");
 			_update_button(&video.mouse.left, FALSE);
 		}
 		if (event.type == NSEventTypeRightMouseDown) {
-			print("mouse press");
 			_update_button(&video.mouse.left, TRUE);
 		}
 		if (event.type == NSEventTypeRightMouseUp) {
-			print("mouse press");
 			_update_button(&video.mouse.left, FALSE);
 		}
 		

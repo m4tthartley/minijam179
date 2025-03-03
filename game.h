@@ -23,6 +23,7 @@ typedef enum {
 typedef struct {
 	tile_building_type_t type;
 	int varient;
+	float health;
 } tile_building_t;
 typedef struct {
 	tile_type_t type;
@@ -41,6 +42,9 @@ typedef struct {
 	vec2_t pos;
 	int2_t tilePos;
 	int2_t tileDest;
+	int2_t nextTileDest;
+	int2_t job;
+	float aniMove;
 	float aniFrame;
 } entity_t;
 
@@ -61,6 +65,10 @@ typedef struct {
 	tile_t map[MAP_SIZE*MAP_SIZE];
 	entity_t entities[64];
 	vec2_t cameraPos;
+
+	int wood;
+	entity_t* selectedWorker;
+	b32 workerDragMode;
 } sys_t;
 
 void G_Init();
