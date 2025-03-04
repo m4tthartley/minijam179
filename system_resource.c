@@ -11,6 +11,7 @@ char* Sys_GetResourcePath(allocator_t* allocator, char* filename) {
 	CFURLRef bundleUrl = CFBundleCopyBundleURL(bundle);
 	char bundlePath[MAX_PATH_LENGTH];
 	CFURLGetFileSystemRepresentation(bundleUrl, true, (UInt8*)bundlePath, MAX_PATH_LENGTH);
+	CFRelease(bundleUrl);
 
 	file_t file;
 	char testPath[MAX_PATH_LENGTH];
