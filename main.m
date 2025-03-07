@@ -18,7 +18,7 @@
 #include <core/core.c>
 #include <core/math.h>
 #include <core/hotreload.h>
-#include <core/platform.h>
+// #include <core/platform.h>
 
 extern sys_t sys;
 extern video_t video;

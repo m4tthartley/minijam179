@@ -3,6 +3,7 @@
 //  Copyright 2025 GiantJelly. All rights reserved.
 //
 
+#include <core/system.h>
 #include <core/core.h>
 #include "bitmap.h"
 
@@ -15,16 +16,16 @@ bitmap_t* LoadBitmap(allocator_t* allocator, char* filename) {
 	// char* data;
 	// int rowSize;
 	
-	file_t file = file_open(filename);
+	file_t file = sys_open(filename);
 	if (file == -1) {
 		print("Failed to load bitmap: %s", filename);
 		return NULL;
 	}
-	stat_t fileinfo = file_stat(file);
+	stat_t fileinfo = sys_stat(file);
 	int fileSize = fileinfo.size;
 	void* fileData = alloc_memory(allocator, fileSize);
-	file_read(file, 0, fileData, fileSize);
-	file_close(file);
+	sys_read(file, 0, fileData, fileSize);
+	sys_close(file);
 
 
 	// fontFile = fopen(filename, "r"); // todo: this stuff crashes when file not found

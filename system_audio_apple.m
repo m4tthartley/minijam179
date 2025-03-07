@@ -35,7 +35,7 @@ OSStatus Sys_AURenderCallback(
 	UInt32 numFrames,
 	AudioBufferList* data
 ) {
-	zero_memory(data->mBuffers[0].mData, sizeof(float)*2*numFrames);
+	sys_zero_memory(data->mBuffers[0].mData, sizeof(float)*2*numFrames);
 
 	// static int cursor = 0;
 	// FOR (i, numFrames) {

@@ -298,7 +298,7 @@ SYS_FUNC void Sys_InitWindow() {
 	[state->window makeKeyAndOrderFront: nil];
 	[state->app activateIgnoringOtherApps: YES];
 
-	time_t startTime = system_time();
+	time_t startTime = sys_time();
 
 	// for (;;) {
 	// 	V_UpdateWindow();

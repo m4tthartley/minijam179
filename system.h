@@ -13,6 +13,7 @@
 // #import <QuartzCore/CAMetalLayer.h>
 // #import <Metal/Metal.h>
 #include <core/core.h>
+#include <core/system.h>
 #include <core/math.h>
 #include <core/video.h>
 

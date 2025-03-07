@@ -4,6 +4,7 @@
 //
 
 #include <Carbon/Carbon.h>
+#include <core/system.h>
 #include <core/core.h>
 
 char* Sys_GetResourcePath(allocator_t* allocator, char* filename) {
@@ -17,29 +18,29 @@ char* Sys_GetResourcePath(allocator_t* allocator, char* filename) {
 	char testPath[MAX_PATH_LENGTH];
 
 	// Check working directory
-	if ((file = file_open(filename)) != -1) {
-		file_close(file);
+	if ((file = sys_open(filename))) {
+		sys_close(file);
 		return filename;
 	}
 
 	// Check bundle
-	copy_memory(testPath, bundlePath, MAX_PATH_LENGTH);
+	sys_copy_memory(testPath, bundlePath, MAX_PATH_LENGTH);
 	char_append(testPath, "/", MAX_PATH_LENGTH);
 	char_append(testPath, filename, MAX_PATH_LENGTH);
-	if ((file = file_open(testPath)) != -1) {
-		file_close(file);
+	if ((file = sys_open(testPath))) {
+		sys_close(file);
 		char* result = malloc(str_len(testPath)+1);
-		copy_memory(result, testPath, str_len(testPath)+1);
+		sys_copy_memory(result, testPath, str_len(testPath)+1);
 		return result;
 	}
 
 	// Check parent directory
-	copy_memory(testPath, "../", 4);
+	sys_copy_memory(testPath, "../", 4);
 	char_append(testPath, filename, MAX_PATH_LENGTH);
-	if ((file = file_open(testPath)) != -1) {
-		file_close(file);
+	if ((file = sys_open(testPath))) {
+		sys_close(file);
 		char* result = malloc(str_len(testPath)+1);
-		copy_memory(result, testPath, str_len(testPath)+1);
+		sys_copy_memory(result, testPath, str_len(testPath)+1);
 		return result;
 	}
 

@@ -62,7 +62,7 @@ newLine:
 
 bitmap_t* Fnt_GenBitmap(allocator_t* allocator, embedded_font_t* font) {
     bitmap_t* bitmap = alloc_memory(allocator, sizeof(bitmap_t)+128*64*sizeof(u32));
-    zero_memory(bitmap->data, 128*64*sizeof(u32));
+    sys_zero_memory(bitmap->data, 128*64*sizeof(u32));
     FOR (c, 128) {
         int charx = c%16 * 8;
 		int chary = c/(16) * 8;

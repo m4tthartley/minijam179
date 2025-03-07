@@ -11,8 +11,8 @@
 
 #include <core/core.c>
 #define CORE_IMPL
+#include <core/system.h>
 #include <core/core.h>
-#include "core/platform.h"
 #include <core/math.h>
 
 sys_t sys;
@@ -21,13 +21,13 @@ extern video_t video;
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
 
-	file_t file = file_open(filename);
+	file_t file = sys_open(filename);
 	if (file) {
-		stat_t info = file_stat(file);
+		stat_t info = sys_stat(file);
 		result = alloc_memory(allocator, sizeof(file_data_t)+info.size);
-		copy_memory(result, &info, sizeof(info));
-		file_read(file, 0, result+1, info.size);
-		file_close(file);
+		sys_copy_memory(result, &info, sizeof(info));
+		sys_read(file, 0, result+1, info.size);
+		sys_close(file);
 	}
 
 	return result;
@@ -235,7 +235,7 @@ path_t G_GetNextTileFromPath(int2_t pos, path_queue_node_t node) {
 }
 path_t G_PathFind(int2_t pos, int2_t dest) {
 	// print("G_PathFind");
-	zero_memory(pathNodes, sizeof(pathNodes));
+	sys_zero_memory(pathNodes, sizeof(pathNodes));
 	pathQueueCount = 0;
 	pathQueueQueued = 0;
 
@@ -286,7 +286,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 
 	print("Path was not calculated");
 	int2_t* pathMem = push_memory(&sys.scratchBuffer, sizeof(pos));
-	copy_memory(pathMem, &pos, sizeof(pos));
+	sys_copy_memory(pathMem, &pos, sizeof(pos));
 	return (path_t){
 		.tiles = pathMem,
 		.length = 1,
@@ -489,6 +489,6 @@ void G_Update() {
 	
 	// clear_allocator(&sys.scratchBuffer);
 	sys.scratchBuffer.stackptr = 0;
-	zero_memory(sys.scratchBuffer.address, sys.scratchBuffer.size);
+	sys_zero_memory(sys.scratchBuffer.address, sys.scratchBuffer.size);
 	Sys_OutputFrameAndSync();
 }
