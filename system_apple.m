@@ -12,7 +12,6 @@
 
 #include <core/core.h>
 #include <core/math.h>
-#include <core/math.c>
 
 #include "system.h"
 #include "game.h"

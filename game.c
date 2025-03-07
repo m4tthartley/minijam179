@@ -3,14 +3,17 @@
 //  Copyright 2025 GiantJelly. All rights reserved.
 //
 
-#include <core/core.h>
-#include <core/core.c>
-#include "core/platform.h"
 #include "game.h"
 #include "render.h"
 #include "bitmap.h"
 #include "font.c"
 #include "system.h"
+
+#include <core/core.c>
+#define CORE_IMPL
+#include <core/core.h>
+#include "core/platform.h"
+#include <core/math.h>
 
 sys_t sys;
 extern video_t video;
@@ -66,7 +69,7 @@ void G_GenTower(int2_t pos, float energy) {
 		return;
 	}
 	sys.map[pos.y*MAP_SIZE+pos.x].building.type = TILE_BUILDING_TOWER;
-	sys.map[pos.y*MAP_SIZE+pos.x].building.varient = randi(0, 3);
+	sys.map[pos.y*MAP_SIZE+pos.x].building.varient = randr(0, 3);
 	sys.map[pos.y*MAP_SIZE+pos.x].building.health = 1.0f;
 
 	if (energy > 0.0f) {
@@ -119,7 +122,7 @@ void G_Init() {
 	
 	print("generated towers...");
 	FOR (i, 10) {
-		G_GenTower(int2(randi(0, MAP_SIZE), randi(0, MAP_SIZE)), randf_range(1.0f, 2.0f));
+		G_GenTower(int2(randr(0, MAP_SIZE), randr(0, MAP_SIZE)), randfr(1.0f, 2.0f));
 	}
 	print("done.");
 }
@@ -224,7 +227,7 @@ path_t G_GetNextTileFromPath(int2_t pos, path_queue_node_t node) {
 			previous.y >= pos.y-1 &&
 			previous.y <= pos.y+1);
 
-	if (path.tiles[0].combined == int2(0,0).combined) {
+	if (path.tiles[0].large == int2(0,0).large) {
 		int x = 0;
 	}
 
@@ -255,7 +258,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 		FOR (i, 4) {
 			int2_t dir = pathDirs[i+1];
 			int2_t tile = int2(node.x+dir.x, node.y+dir.y);
-			if (tile.combined == dest.combined &&
+			if (tile.large == dest.large &&
 				sys.map[tile.y*MAP_SIZE+tile.x].building.type != TILE_BUILDING_NONE) {
 				return G_GetNextTileFromPath(pos, node);
 			}
@@ -355,7 +358,7 @@ void G_Update() {
 
 		if (video.mouse.left.pressed) {
 			FOR (i, array_size(sys.entities)) {
-				if (sys.entities[i].tilePos.combined == highlightedTile->pos.combined) {
+				if (sys.entities[i].tilePos.large == highlightedTile->pos.large) {
 					sys.workerDragMode = TRUE;
 					sys.selectedWorker = sys.entities + i;
 					break;
@@ -402,7 +405,7 @@ void G_Update() {
 					entity->tilePos = entity->nextTileDest;
 				}
 			} else {
-				if (entity->tilePos.combined != entity->tileDest.combined) {
+				if (entity->tilePos.large != entity->tileDest.large) {
 					path_t path = G_PathFind(entity->tilePos, entity->tileDest);
 
 					// FOR (p, path.length) {
@@ -417,7 +420,7 @@ void G_Update() {
 						entity->nextTileDest = path.tiles[0];
 					}
 
-					if (path.tiles[0].combined == entity->tilePos.combined) {
+					if (path.tiles[0].large == entity->tilePos.large) {
 						entity->tileDest = entity->tilePos;
 					}
 				}
