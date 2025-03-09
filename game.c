@@ -18,7 +18,7 @@
 
 sys_t sys;
 extern video_t video;
-window_t window;
+sys_window_t window;
 
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
@@ -104,8 +104,8 @@ void G_Init() {
 
 	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
 
-	sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
-	Sys_QueueSound(sys.pianoTest, 0.5f);
+	// sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
+	// Sys_QueueSound(sys.pianoTest, 0.5f);
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
@@ -298,20 +298,22 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 }
 
 void G_Update() {
-	Sys_PollEvents(&window);
+	// Sys_PollEvents(&window);
+	sys_poll_events(&window);
+
 	vec2_t cameraSpeed = {0};
-	cameraSpeed.x = (float)video.keyboard[KEY_D].down - (float)video.keyboard[KEY_A].down;
-	cameraSpeed.y = (float)video.keyboard[KEY_W].down - (float)video.keyboard[KEY_S].down;
+	cameraSpeed.x = (float)window.keyboard[KEY_D].down - (float)window.keyboard[KEY_A].down;
+	cameraSpeed.y = (float)window.keyboard[KEY_W].down - (float)window.keyboard[KEY_S].down;
 	sys.cameraPos = add2(sys.cameraPos, mul2f(cameraSpeed, 0.25f));
-	if (video.keyboard[KEY_S].down) {
+	if (window.keyboard[KEY_S].down) {
 		int x = 0;
 	}
 
 	tile_t* highlightedTile = NULL;
 
 	vec2_t mouseInWorldSpace = vec2(
-		((float)video.mouse.pos.x/video.screenSize.x - 0.5f) * video.worldSpace.x,
-		((float)video.mouse.pos.y/video.screenSize.y - 0.5f) * video.worldSpace.y
+		((float)window.mouse.pos.x/video.screenSize.x - 0.5f) * video.worldSpace.x,
+		((float)window.mouse.pos.y/video.screenSize.y - 0.5f) * video.worldSpace.y
 	);
 	mouseInWorldSpace = sub2(mouseInWorldSpace, vec2(0.0f, 1.5f));
 	vec2_t mouseTile = G_ScreenSpaceToTileSpace(sub2(mouseInWorldSpace, sys.cameraPos));
@@ -356,11 +358,11 @@ void G_Update() {
 
 	// Highlight tile
 	if (highlightedTile) {
-		if (video.keyboard[KEY_E].released) {
+		if (window.keyboard[KEY_E].released) {
 			G_AddEntity(ENTITY_WORKER, highlightedTile->pos);
 		}
 
-		if (video.mouse.left.pressed) {
+		if (window.mouse.left.pressed) {
 			FOR (i, array_size(sys.entities)) {
 				if (sys.entities[i].tilePos.large == highlightedTile->pos.large) {
 					sys.workerDragMode = TRUE;
@@ -369,7 +371,7 @@ void G_Update() {
 				}
 			}
 		}
-		if (video.mouse.left.released) {
+		if (window.mouse.left.released) {
 			if (sys.workerDragMode && sys.selectedWorker) {
 				sys.selectedWorker->tileDest = highlightedTile->pos;
 				sys.selectedWorker->job = highlightedTile->pos;
@@ -454,6 +456,22 @@ void G_Update() {
 		sys.fontBitmap, 
 		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("Wood: %i", sys.wood), (font_settings_t){100}),
 		vec2(-19.0f, 11.0f)
+	);
+
+	R_BlitFontBitmaps(
+		sys.fontBitmap, 
+		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse pos: %i, %i", window.mouse.pos.x, window.mouse.pos.y), (font_settings_t){100}),
+		vec2(-19.0f, 10.0f)
+	);
+	R_BlitFontBitmaps(
+		sys.fontBitmap, 
+		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse dt: %i, %i", window.mouse.pos_dt.x, window.mouse.pos_dt.y), (font_settings_t){100}),
+		vec2(-19.0f, 9.0f)
+	);
+	R_BlitFontBitmaps(
+		sys.fontBitmap, 
+		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window.mouse.wheel_dt), (font_settings_t){100}),
+		vec2(-19.0f, 8.0f)
 	);
 
 	// R_BlitFontBitmaps(

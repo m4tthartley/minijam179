@@ -35,7 +35,7 @@ video_t video;
 
 extern sys_t sys;
 
-@interface MetalView : NSView <NSWindowDelegate>
+@interface MetalView : NSView
 @end
 @implementation MetalView
 
@@ -57,37 +57,37 @@ extern sys_t sys;
 	return self;
 }
 
-- (BOOL) acceptsFirstResponder {
-	return YES;
-}
+// - (BOOL) acceptsFirstResponder {
+// 	return YES;
+// }
 
-- (void) keyDown: (NSEvent*) event {
-	// assert(event.keyCode < array_size(video.keyboard));
-	// _update_button(&video.keyboard[event.keyCode], TRUE);
-	// print("button press");
-}
+// - (void) keyDown: (NSEvent*) event {
+// 	// assert(event.keyCode < array_size(video.keyboard));
+// 	// _update_button(&video.keyboard[event.keyCode], TRUE);
+// 	// print("button press");
+// }
 
-- (void) keyUp: (NSEvent*) event {
-	// assert(event.keyCode < array_size(video.keyboard));
-	// _update_button(&video.keyboard[event.keyCode], FALSE);
-} 
-
-@end
-
-@interface AppDelegate : NSObject <NSWindowDelegate>
-@end
-@implementation AppDelegate
-
-- (void) windowWillClose: (NSNotification*) notification {
-	print("Window close requested");
-	exit(1);
-}
-
-- (void) applicationDidFinishLaunching:(NSNotification*)notification {
-	print("applicationDidFinishLaunching");
-}
+// - (void) keyUp: (NSEvent*) event {
+// 	// assert(event.keyCode < array_size(video.keyboard));
+// 	// _update_button(&video.keyboard[event.keyCode], FALSE);
+// } 
 
 @end
+
+// @interface AppDelegate : NSObject <NSWindowDelegate>
+// @end
+// @implementation AppDelegate
+
+// - (void) windowWillClose: (NSNotification*) notification {
+// 	print("Window close requested");
+// 	exit(1);
+// }
+
+// - (void) applicationDidFinishLaunching:(NSNotification*)notification {
+// 	print("applicationDidFinishLaunching");
+// }
+
+// @end
 
 NSString* shaderSource =
 @"#include <metal_stdlib>\n"
@@ -121,7 +121,7 @@ NSString* shaderSource =
 "}\n"
 ;
 
-SYS_FUNC void Sys_InitMetalView(window_t* win) {
+SYS_FUNC void Sys_InitMetalView(sys_window_t* win) {
 	// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 	NSWindow* window = win->sysWindow;
 
@@ -134,7 +134,7 @@ SYS_FUNC void Sys_InitMetalView(window_t* win) {
 	[window setContentView: metalView];
 }
 
-SYS_FUNC void Sys_InitMetal(window_t* win) {
+SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 	NSApplication* app = win->sysApp;
 	NSWindow* window = win->sysWindow;
@@ -218,11 +218,12 @@ SYS_FUNC void Sys_OutputFrameAndSync() {
 	float diff = xd / yd;
 	int relativeWidth = ((float)video.screenSize.y / (float)video.framebufferSize.y) * (float)video.framebufferSize.x; //(float)video.screenSize.x * diff;
 	int xoffset = (video.screenSize.x-relativeWidth)/2;
-	for (int iy=0; iy<video.screenSize.y; ++iy)
-	for (int ix=xoffset; ix<xoffset+relativeWidth; ++ix) {
-		int x = ((float)(ix-xoffset) / relativeWidth) * (float)video.framebufferSize.x;
-		int y = ((float)(iy) / video.screenSize.y) * (float)video.framebufferSize.y;
-		video.scaledFramebuffer[iy*video.screenSize.x+ix] = video.framebuffer[(video.framebufferSize.y-y-1)*video.framebufferSize.x+x];
+	for (int iy=0; iy<video.screenSize.y; ++iy){
+		for (int ix=xoffset; ix<xoffset+relativeWidth; ++ix) {
+			int x = ((float)(ix-xoffset) / relativeWidth) * (float)video.framebufferSize.x;
+			int y = ((float)(iy) / video.screenSize.y) * (float)video.framebufferSize.y;
+			video.scaledFramebuffer[iy*video.screenSize.x+ix] = video.framebuffer[(video.framebufferSize.y-y-1)*video.framebufferSize.x+x];
+		}
 	}
 
 	MTLRegion region = {
@@ -309,57 +310,57 @@ SYS_FUNC void Sys_OutputFrameAndSync() {
 	
 // }
 
-SYS_FUNC void Sys_PollEvents(window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
-	NSApplication* app = win->sysApp;
-	NSWindow* window = win->sysWindow;
+// SYS_FUNC void Sys_PollEvents(window_t* win) {
+// 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+// 	NSApplication* app = win->sysApp;
+// 	NSWindow* window = win->sysWindow;
 
-	// zero_memory(&video.keyboard, sizeof(video.keyboard));
-	// zero_memory(&video.mouse, sizeof(video.mouse));
-	FOR (i, array_size(video.keyboard)) {
-		_update_button(video.keyboard+i, video.keyboard[i].down);
-	}
+// 	// zero_memory(&video.keyboard, sizeof(video.keyboard));
+// 	// zero_memory(&video.mouse, sizeof(video.mouse));
+// 	FOR (i, array_size(video.keyboard)) {
+// 		_update_button(video.keyboard+i, video.keyboard[i].down);
+// 	}
 
-	_update_button(&video.mouse.left, video.mouse.left.down);
-	_update_button(&video.mouse.right, video.mouse.right.down);
+// 	_update_button(&video.mouse.left, video.mouse.left.down);
+// 	_update_button(&video.mouse.right, video.mouse.right.down);
 
-	NSEvent* event;
-	while ((event = [app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
-		// print("event %i", event.type);
-		if (event.type == NSEventTypeApplicationDefined) {
-			exit(1);
-		}
+// 	NSEvent* event;
+// 	while ((event = [app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
+// 		// print("event %i", event.type);
+// 		if (event.type == NSEventTypeApplicationDefined) {
+// 			exit(1);
+// 		}
 
-		if (event.type == NSEventTypeKeyDown) {
-			assert(event.keyCode < array_size(video.keyboard));
-			_update_button(&video.keyboard[event.keyCode], TRUE);
-			// print("key state %i %i %i", video.keyboard[event.keyCode].down, video.keyboard[event.keyCode].pressed, video.keyboard[event.keyCode].released);
-		}
-		if (event.type == NSEventTypeKeyUp) {
-			assert(event.keyCode < array_size(video.keyboard));
-			_update_button(&video.keyboard[event.keyCode], FALSE);
-		}
+// 		if (event.type == NSEventTypeKeyDown) {
+// 			assert(event.keyCode < array_size(video.keyboard));
+// 			_update_button(&video.keyboard[event.keyCode], TRUE);
+// 			// print("key state %i %i %i", video.keyboard[event.keyCode].down, video.keyboard[event.keyCode].pressed, video.keyboard[event.keyCode].released);
+// 		}
+// 		if (event.type == NSEventTypeKeyUp) {
+// 			assert(event.keyCode < array_size(video.keyboard));
+// 			_update_button(&video.keyboard[event.keyCode], FALSE);
+// 		}
 
-		if (event.type == NSEventTypeLeftMouseDown) {
-			_update_button(&video.mouse.left, TRUE);
-		}
-		if (event.type == NSEventTypeLeftMouseUp) {
-			_update_button(&video.mouse.left, FALSE);
-		}
-		if (event.type == NSEventTypeRightMouseDown) {
-			_update_button(&video.mouse.left, TRUE);
-		}
-		if (event.type == NSEventTypeRightMouseUp) {
-			_update_button(&video.mouse.left, FALSE);
-		}
+// 		if (event.type == NSEventTypeLeftMouseDown) {
+// 			_update_button(&video.mouse.left, TRUE);
+// 		}
+// 		if (event.type == NSEventTypeLeftMouseUp) {
+// 			_update_button(&video.mouse.left, FALSE);
+// 		}
+// 		if (event.type == NSEventTypeRightMouseDown) {
+// 			_update_button(&video.mouse.left, TRUE);
+// 		}
+// 		if (event.type == NSEventTypeRightMouseUp) {
+// 			_update_button(&video.mouse.left, FALSE);
+// 		}
 		
-		[app sendEvent: event];
-		[app updateWindows];
-	}
+// 		[app sendEvent: event];
+// 		[app updateWindows];
+// 	}
 
-	NSPoint mousePos = [NSEvent mouseLocation];
-	// mousePos = [state->window convertScreenToBase: mousePos]; // needed for old mac versions
-	mousePos = [window convertPointFromScreen: mousePos];
-	video.mouse.pos.x = mousePos.x;
-	video.mouse.pos.y = mousePos.y;
-}
+// 	NSPoint mousePos = [NSEvent mouseLocation];
+// 	// mousePos = [state->window convertScreenToBase: mousePos]; // needed for old mac versions
+// 	mousePos = [window convertPointFromScreen: mousePos];
+// 	video.mouse.pos.x = mousePos.x;
+// 	video.mouse.pos.y = mousePos.y;
+// }

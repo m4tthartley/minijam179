@@ -58,8 +58,8 @@ typedef struct {
 	vec2_t worldSpaceMax;
 	vec2_t worldSpace;
 
-	button_t keyboard[256];
-	mouse_t mouse;
+	// button_t keyboard[256];
+	// mouse_t mouse;
 } video_t;
 
 typedef struct {
@@ -89,11 +89,11 @@ typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* user
 
 #define SYS_FUNC
 
-SYS_FUNC void Sys_InitMetal(window_t* win);
+SYS_FUNC void Sys_InitMetal(sys_window_t* win);
 SYS_FUNC void Sys_OutputFrameAndSync();
 // SYS_FUNC void Sys_InitWindow();
 // SYS_FUNC void Sys_InitMetal();
-SYS_FUNC void Sys_PollEvents(window_t* win);
+// SYS_FUNC void Sys_PollEvents(window_t* win);
 
 SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
 SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);
