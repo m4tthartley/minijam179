@@ -15,7 +15,6 @@
 
 #define CORE_IMPL
 #include <core/core.h>
-#include <core/core.c>
 #include <core/math.h>
 #include <core/hotreload.h>
 // #include <core/platform.h>

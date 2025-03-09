@@ -9,14 +9,16 @@
 #include "font.c"
 #include "system.h"
 
-#include <core/core.c>
+#include <core/sys_video.h>
 #define CORE_IMPL
 #include <core/system.h>
 #include <core/core.h>
 #include <core/math.h>
+#include <core/font.h>
 
 sys_t sys;
 extern video_t video;
+window_t window;
 
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
@@ -26,7 +28,7 @@ file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 		stat_t info = sys_stat(file);
 		result = alloc_memory(allocator, sizeof(file_data_t)+info.size);
 		sys_copy_memory(result, &info, sizeof(info));
-		sys_read(file, 0, result+1, info.size);
+		_Bool readResult = sys_read(file, 0, result+1, info.size);
 		sys_close(file);
 	}
 
@@ -82,8 +84,10 @@ void G_GenTower(int2_t pos, float energy) {
 
 void G_Init() {
 	sys.running = TRUE;
-	Sys_InitWindow();
-	Sys_InitMetal();
+	// Sys_InitWindow();
+	window = sys_init_window("Green Energy", 1280, 800, WINDOW_CENTERED);
+	video.screenSize = int2(1280, 800);
+	Sys_InitMetal(&window);
 
 	Sys_InitAudio(NULL);
 
@@ -100,8 +104,8 @@ void G_Init() {
 
 	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
 
-	// sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
-	// Sys_QueueSound(sys.pianoTest, 0.5f);
+	sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
+	Sys_QueueSound(sys.pianoTest, 0.5f);
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
@@ -294,7 +298,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 }
 
 void G_Update() {
-	Sys_PollEvents();
+	Sys_PollEvents(&window);
 	vec2_t cameraSpeed = {0};
 	cameraSpeed.x = (float)video.keyboard[KEY_D].down - (float)video.keyboard[KEY_A].down;
 	cameraSpeed.y = (float)video.keyboard[KEY_W].down - (float)video.keyboard[KEY_S].down;

@@ -11,6 +11,7 @@
 #import <QuartzCore/CAMetalLayer.h>
 
 #include <core/core.h>
+#include <core/sys_video.h>
 #include <core/math.h>
 
 #include "system.h"
@@ -18,8 +19,8 @@
 
 
 typedef struct {
-	NSApplication* app;
-	NSWindow* window;
+	// NSApplication* app;
+	// NSWindow* window;
 
 	id<MTLDevice> device;
 	CAMetalLayer* metalLayer;
@@ -120,8 +121,9 @@ NSString* shaderSource =
 "}\n"
 ;
 
-SYS_FUNC void Sys_InitMetalView() {
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+SYS_FUNC void Sys_InitMetalView(window_t* win) {
+	// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	NSWindow* window = win->sysWindow;
 
 	video.framebufferSize = int2(320, 200);
 	video.framebuffer = malloc(sizeof(u32) * video.framebufferSize.x * video.framebufferSize.y);
@@ -129,13 +131,15 @@ SYS_FUNC void Sys_InitMetalView() {
 
 	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
 	MetalView* metalView = [[[MetalView alloc] initWithFrame: frame] retain];
-	[state->window setContentView: metalView];
+	[window setContentView: metalView];
 }
 
-SYS_FUNC void Sys_InitMetal() {
+SYS_FUNC void Sys_InitMetal(window_t* win) {
 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	NSApplication* app = win->sysApp;
+	NSWindow* window = win->sysWindow;
 
-	Sys_InitMetalView();
+	Sys_InitMetalView(win);
 
 	id<MTLDevice> device = [MTLCreateSystemDefaultDevice() retain];
 	// [device retain];
@@ -148,8 +152,8 @@ SYS_FUNC void Sys_InitMetal() {
 	state->metalLayer.device = device;
 	state->metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 	state->metalLayer.framebufferOnly = YES;
-	state->metalLayer.frame = state->window.contentView.bounds;
-	state->metalLayer.drawableSize = state->window.contentView.bounds.size;
+	state->metalLayer.frame = window.contentView.bounds;
+	state->metalLayer.drawableSize = window.contentView.bounds.size;
 
 	state->commandQueue = [[device newCommandQueue] retain];
 	// state->commandQueue = commandQueue;
@@ -198,7 +202,7 @@ SYS_FUNC void Sys_InitMetal() {
 	[texDesc release];
 	// state->framebufferTexture = texture;
 
-	state->window.contentView.layer = state->metalLayer;
+	window.contentView.layer = state->metalLayer;
 }
 
 SYS_FUNC void Sys_OutputFrameAndSync() {
@@ -266,54 +270,49 @@ SYS_FUNC void Sys_OutputFrameAndSync() {
 	[commandBuffer commit];
 }
 
-SYS_FUNC void Sys_InitWindow() {
-	int sys_objc_state_size = sizeof(sys_objc_state_t);
-	assert(sizeof(sys.objc_state) >= sys_objc_state_size);
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+// SYS_FUNC void Sys_InitWindow() {
+// 	int sys_objc_state_size = sizeof(sys_objc_state_t);
+// 	assert(sizeof(sys.objc_state) >= sys_objc_state_size);
+// 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 
-	state->app = [NSApplication sharedApplication];
-	// video.app = app;
-	[state->app setActivationPolicy: NSApplicationActivationPolicyRegular];
-	// AppDelegate* delegate = [[AppDelegate alloc] init];
-	// [video.app setDelegate: delegate];
-	// [video.app run];
+// 	state->app = [NSApplication sharedApplication];
+// 	// video.app = app;
+// 	[state->app setActivationPolicy: NSApplicationActivationPolicyRegular];
+// 	// AppDelegate* delegate = [[AppDelegate alloc] init];
+// 	// [video.app setDelegate: delegate];
+// 	// [video.app run];
 
-	// 320x200
-	// 640x400
-	// 1280x800
-	video.screenSize = int2(1280, 800);
-	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
-	state->window = [[
-		[NSWindow alloc] initWithContentRect: frame
-		styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
-		backing: NSBackingStoreBuffered
-		defer: NO
-	] retain];
-	// video.window = window;
+// 	// 320x200
+// 	// 640x400
+// 	// 1280x800
+// 	video.screenSize = int2(1280, 800);
+// 	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	state->window = [[
+// 		[NSWindow alloc] initWithContentRect: frame
+// 		styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
+// 		backing: NSBackingStoreBuffered
+// 		defer: NO
+// 	] retain];
+// 	// video.window = window;
 
-	AppDelegate* delegate = [[[AppDelegate alloc] init] retain];
-	[state->window setDelegate: delegate];
-	// NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
-	[state->window center];
-	[state->window makeKeyAndOrderFront: nil];
-	[state->app activateIgnoringOtherApps: YES];
+// 	AppDelegate* delegate = [[[AppDelegate alloc] init] retain];
+// 	[state->window setDelegate: delegate];
+// 	// NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	[state->window center];
+// 	[state->window makeKeyAndOrderFront: nil];
+// 	[state->app activateIgnoringOtherApps: YES];
 
-	time_t startTime = sys_time();
-
-	// for (;;) {
-	// 	V_UpdateWindow();
-
-	// 	V_OutputFrameAndSync();
-	// }
-}
+// 	time_t startTime = sys_time();
+// }
 
 // SYS_FUNC void Sys_InitMetal() {
 	
 // }
 
-SYS_FUNC void Sys_PollEvents() {
+SYS_FUNC void Sys_PollEvents(window_t* win) {
 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
-	// NSApplication* app = video.app;
+	NSApplication* app = win->sysApp;
+	NSWindow* window = win->sysWindow;
 
 	// zero_memory(&video.keyboard, sizeof(video.keyboard));
 	// zero_memory(&video.mouse, sizeof(video.mouse));
@@ -325,7 +324,7 @@ SYS_FUNC void Sys_PollEvents() {
 	_update_button(&video.mouse.right, video.mouse.right.down);
 
 	NSEvent* event;
-	while ((event = [state->app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
+	while ((event = [app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
 		// print("event %i", event.type);
 		if (event.type == NSEventTypeApplicationDefined) {
 			exit(1);
@@ -354,13 +353,13 @@ SYS_FUNC void Sys_PollEvents() {
 			_update_button(&video.mouse.left, FALSE);
 		}
 		
-		[state->app sendEvent: event];
-		[state->app updateWindows];
+		[app sendEvent: event];
+		[app updateWindows];
 	}
 
 	NSPoint mousePos = [NSEvent mouseLocation];
 	// mousePos = [state->window convertScreenToBase: mousePos]; // needed for old mac versions
-	mousePos = [state->window convertPointFromScreen: mousePos];
+	mousePos = [window convertPointFromScreen: mousePos];
 	video.mouse.pos.x = mousePos.x;
 	video.mouse.pos.y = mousePos.y;
 }

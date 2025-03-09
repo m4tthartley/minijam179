@@ -15,75 +15,28 @@
 #include <core/core.h>
 #include <core/system.h>
 #include <core/math.h>
-#include <core/video.h>
+#include <core/sys_video.h>
 
 
-#define KEY_A       kVK_ANSI_A
-#define KEY_B       kVK_ANSI_B
-#define KEY_C       kVK_ANSI_C
-#define KEY_D       kVK_ANSI_D
-#define KEY_E       kVK_ANSI_E
-#define KEY_F       kVK_ANSI_F
-#define KEY_G       kVK_ANSI_G
-#define KEY_H       kVK_ANSI_H
-#define KEY_I       kVK_ANSI_I
-#define KEY_J       kVK_ANSI_J
-#define KEY_K       kVK_ANSI_K
-#define KEY_L       kVK_ANSI_L
-#define KEY_M       kVK_ANSI_M
-#define KEY_N       kVK_ANSI_N
-#define KEY_O       kVK_ANSI_O
-#define KEY_P       kVK_ANSI_P
-#define KEY_Q       kVK_ANSI_Q
-#define KEY_R       kVK_ANSI_R
-#define KEY_S       kVK_ANSI_S
-#define KEY_T       kVK_ANSI_T
-#define KEY_U       kVK_ANSI_U
-#define KEY_V       kVK_ANSI_V
-#define KEY_W       kVK_ANSI_W
-#define KEY_X       kVK_ANSI_X
-#define KEY_Y       kVK_ANSI_Y
-#define KEY_Z       kVK_ANSI_Z
+// typedef enum {
+// 	KEY_A=kVK_ANSI_A, KEY_B=kVK_ANSI_B, KEY_C=kVK_ANSI_C, KEY_D=kVK_ANSI_D, KEY_E=kVK_ANSI_E, KEY_F=kVK_ANSI_F,
+// 	KEY_G=kVK_ANSI_G, KEY_H=kVK_ANSI_H, KEY_I=kVK_ANSI_I, KEY_J=kVK_ANSI_J, KEY_K=kVK_ANSI_K, KEY_L=kVK_ANSI_L,
+// 	KEY_M=kVK_ANSI_M, KEY_N=kVK_ANSI_N, KEY_O=kVK_ANSI_O, KEY_P=kVK_ANSI_P, KEY_Q=kVK_ANSI_Q, KEY_R=kVK_ANSI_R,
+// 	KEY_S=kVK_ANSI_S, KEY_T=kVK_ANSI_T, KEY_U=kVK_ANSI_U, KEY_V=kVK_ANSI_V, KEY_W=kVK_ANSI_W, KEY_X=kVK_ANSI_X,
+// 	KEY_Y=kVK_ANSI_Y, KEY_Z=kVK_ANSI_Z,
 
-#define KEY_1       kVK_ANSI_1
-#define KEY_2       kVK_ANSI_2
-#define KEY_3       kVK_ANSI_3
-#define KEY_4       kVK_ANSI_4
-#define KEY_5       kVK_ANSI_5
-#define KEY_6       kVK_ANSI_6
-#define KEY_7       kVK_ANSI_7
-#define KEY_8       kVK_ANSI_8
-#define KEY_9       kVK_ANSI_9
-#define KEY_0       kVK_ANSI_0
-
-#define KEY_F1      kVK_F1
-#define KEY_F2      kVK_F2
-#define KEY_F3      kVK_F3
-#define KEY_F4      kVK_F4
-#define KEY_F5      kVK_F5
-#define KEY_F6      kVK_F6
-#define KEY_F7      kVK_F7
-#define KEY_F8      kVK_F8
-#define KEY_F9      kVK_F9
-#define KEY_F10     kVK_F10
-#define KEY_F11     kVK_F11
-#define KEY_F12     kVK_F12
-
-#define KEY_LEFT    kVK_LeftArrow
-#define KEY_UP      kVK_UpArrow
-#define KEY_RIGHT   kVK_RightArrow
-#define KEY_DOWN    kVK_DownArrow
-
-#define KEY_BACK    kVK_Delete
-#define KEY_TAB     kVK_Tab
-#define KEY_RETURN  kVK_Return
-#define KEY_SHIFT   kVK_Shift
-#define KEY_CONTROL kVK_Control
-#define KEY_MENU    kVK_Option
-#define KEY_ESC     kVK_Escape
-#define KEY_SPACE   kVK_Space
-#define KEY_COMMAND kVK_Command
-
+// 	KEY_1=kVK_ANSI_1, KEY_2=kVK_ANSI_2, KEY_3=kVK_ANSI_3, KEY_4=kVK_ANSI_4, KEY_5=kVK_ANSI_5,
+// 	KEY_6=kVK_ANSI_6, KEY_7=kVK_ANSI_7, KEY_8=kVK_ANSI_8, KEY_9=kVK_ANSI_9, KEY_0=kVK_ANSI_0,
+	
+// 	KEY_F1=kVK_F1, KEY_F2=kVK_F2, KEY_F3=kVK_F3, KEY_F4=kVK_F4, KEY_F5=kVK_F5, KEY_F6=kVK_F6,
+// 	KEY_F7=kVK_F7, KEY_F8=kVK_F8, KEY_F9=kVK_F9, KEY_F10=kVK_F10, KEY_F11=kVK_F11, KEY_F12=kVK_F12,
+	
+// 	KEY_LEFT=kVK_LeftArrow, KEY_UP=kVK_UpArrow, KEY_RIGHT=kVK_RightArrow, KEY_DOWN=kVK_DownArrow,
+	
+// 	KEY_RETURN=kVK_Return, KEY_BACK=kVK_Delete, KEY_SPACE=kVK_Space, KEY_ESC=kVK_Escape, KEY_TAB=kVK_Tab,
+// 	KEY_SHIFT=kVK_Shift, KEY_RSHIFT=kVK_RightShift, KEY_CONTROL=kVK_Control, KEY_RCONTROL=kVK_RightControl,
+// 	KEY_MENU=kVK_Option, KEY_RMENU=kVK_RightOption, KEY_COMMAND=kVK_Command, KEY_RCOMMAND=kVK_RightCommand,
+// } sys_key_code_t;
 
 typedef struct {
 	// /*NSApplication**/ void* app;
@@ -136,11 +89,11 @@ typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* user
 
 #define SYS_FUNC
 
-SYS_FUNC void Sys_InitMetal();
+SYS_FUNC void Sys_InitMetal(window_t* win);
 SYS_FUNC void Sys_OutputFrameAndSync();
-SYS_FUNC void Sys_InitWindow();
+// SYS_FUNC void Sys_InitWindow();
 // SYS_FUNC void Sys_InitMetal();
-SYS_FUNC void Sys_PollEvents();
+SYS_FUNC void Sys_PollEvents(window_t* win);
 
 SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
 SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);

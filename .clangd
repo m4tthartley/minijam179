@@ -1,0 +1,8 @@
+
+CompileFlags:
+  Add:
+    - -I../core
+
+InlayHints:
+  Enabled: false
+  ParameterNames: false
