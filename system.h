@@ -90,7 +90,7 @@ typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* user
 #define SYS_FUNC
 
 SYS_FUNC void Sys_InitMetal(sys_window_t* win);
-SYS_FUNC void Sys_OutputFrameAndSync();
+SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win);
 // SYS_FUNC void Sys_InitWindow();
 // SYS_FUNC void Sys_InitMetal();
 // SYS_FUNC void Sys_PollEvents(window_t* win);

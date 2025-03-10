@@ -83,6 +83,10 @@ void G_GenTower(int2_t pos, float energy) {
 }
 
 void G_Init() {
+	// if (!sys_message_box("Green Energy", "Are you sure you want to play?", "Play", "Quit")) {
+	// 	exit(0);
+	// }
+
 	sys.running = TRUE;
 	// Sys_InitWindow();
 	window = sys_init_window("Green Energy", 1280, 800, WINDOW_CENTERED);
@@ -473,6 +477,11 @@ void G_Update() {
 		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window.mouse.wheel_dt), (font_settings_t){100}),
 		vec2(-19.0f, 8.0f)
 	);
+	R_BlitFontBitmaps(
+		sys.fontBitmap, 
+		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse buttons: %i, %i", (int)window.mouse.left.down, (int)window.mouse.right.down), (font_settings_t){100}),
+		vec2(-19.0f, 7.0f)
+	);
 
 	// R_BlitFontBitmaps(
 	// 	sys.fontBitmap, 
@@ -512,5 +521,5 @@ void G_Update() {
 	// clear_allocator(&sys.scratchBuffer);
 	sys.scratchBuffer.stackptr = 0;
 	sys_zero_memory(sys.scratchBuffer.address, sys.scratchBuffer.size);
-	Sys_OutputFrameAndSync();
+	Sys_OutputFrameAndSync(&window);
 }

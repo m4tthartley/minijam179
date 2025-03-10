@@ -7,6 +7,7 @@
 
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
+#include <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 
@@ -22,9 +23,10 @@ typedef struct {
 	// NSApplication* app;
 	// NSWindow* window;
 
-	id<MTLDevice> device;
-	CAMetalLayer* metalLayer;
-	id<MTLCommandQueue> commandQueue;
+	// id<MTLDevice> device;
+	// CAMetalLayer* metalLayer;
+	// id<MTLCommandQueue> commandQueue;
+
 	id<MTLRenderPipelineState> pipeline;
 
 	id<MTLTexture> framebufferTexture;
@@ -35,27 +37,27 @@ video_t video;
 
 extern sys_t sys;
 
-@interface MetalView : NSView
-@end
-@implementation MetalView
+// @interface MetalView : NSView
+// @end
+// @implementation MetalView
 
-- (instancetype) initWithFrame: (NSRect) frame {
-	self = [super initWithFrame: frame];
-	if (self) {
-		// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
-		// Sys_InitMetal();
-		self.wantsLayer = YES;
-		// self.layer = state->metalLayer;
-	}
+// - (instancetype) initWithFrame: (NSRect) frame {
+// 	self = [super initWithFrame: frame];
+// 	if (self) {
+// 		// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+// 		// Sys_InitMetal();
+// 		self.wantsLayer = YES;
+// 		// self.layer = state->metalLayer;
+// 	}
 
-	// [NSTimer scheduledTimerWithTimeInterval: 1.0/60.0
-	// 	target: self
-	// 	selector: @selector(triggerDraw)
-	// 	userInfo: nil
-	// 	repeats: YES
-	// ];
-	return self;
-}
+// 	// [NSTimer scheduledTimerWithTimeInterval: 1.0/60.0
+// 	// 	target: self
+// 	// 	selector: @selector(triggerDraw)
+// 	// 	userInfo: nil
+// 	// 	repeats: YES
+// 	// ];
+// 	return self;
+// }
 
 // - (BOOL) acceptsFirstResponder {
 // 	return YES;
@@ -72,7 +74,7 @@ extern sys_t sys;
 // 	// _update_button(&video.keyboard[event.keyCode], FALSE);
 // } 
 
-@end
+// @end
 
 // @interface AppDelegate : NSObject <NSWindowDelegate>
 // @end
@@ -121,44 +123,54 @@ NSString* shaderSource =
 "}\n"
 ;
 
-SYS_FUNC void Sys_InitMetalView(sys_window_t* win) {
-	// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+// SYS_FUNC void Sys_InitMetalView(sys_window_t* win) {
+// 	// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+// 	NSWindow* window = win->sysWindow;
+
+// 	video.framebufferSize = int2(320, 200);
+// 	video.framebuffer = malloc(sizeof(u32) * video.framebufferSize.x * video.framebufferSize.y);
+// 	video.scaledFramebuffer = malloc(sizeof(u32) * video.screenSize.x * video.screenSize.y);
+
+// 	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	MetalView* metalView = [[[MetalView alloc] initWithFrame: frame] retain];
+// 	[window setContentView: metalView];
+// }
+
+SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
+	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	// NSApplication* app = win->sysApp;
+
+	// Sys_InitMetalView(win);
+
+	// id<MTLDevice> device = [MTLCreateSystemDefaultDevice() retain];
+	// // [device retain];
+	// state->device = device;
+	// state->metalLayer = [CAMetalLayer layer];
+
+	// // CAMetalLayer* metalLayer = video.metalLayer;
+	// // NSWindow* window = video.window;
+
+	// state->metalLayer.device = device;
+	// state->metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+	// state->metalLayer.framebufferOnly = YES;
+	// state->metalLayer.frame = window.contentView.bounds;
+	// state->metalLayer.drawableSize = window.contentView.bounds.size;
+
+	// state->commandQueue = [[device newCommandQueue] retain];
+	// state->commandQueue = commandQueue;
+	// [commandQueue retain];
+	// video.commandQueue = commandQueue;
+
+	sys_init_metal(win);
+
 	NSWindow* window = win->sysWindow;
+	id<MTLDevice> device = win->mtlDevice;
+	CAMetalLayer* layer = win->mtlLayer;
 
 	video.framebufferSize = int2(320, 200);
 	video.framebuffer = malloc(sizeof(u32) * video.framebufferSize.x * video.framebufferSize.y);
 	video.scaledFramebuffer = malloc(sizeof(u32) * video.screenSize.x * video.screenSize.y);
 
-	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
-	MetalView* metalView = [[[MetalView alloc] initWithFrame: frame] retain];
-	[window setContentView: metalView];
-}
-
-SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
-	NSApplication* app = win->sysApp;
-	NSWindow* window = win->sysWindow;
-
-	Sys_InitMetalView(win);
-
-	id<MTLDevice> device = [MTLCreateSystemDefaultDevice() retain];
-	// [device retain];
-	state->device = device;
-	state->metalLayer = [CAMetalLayer layer];
-
-	// CAMetalLayer* metalLayer = video.metalLayer;
-	// NSWindow* window = video.window;
-
-	state->metalLayer.device = device;
-	state->metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-	state->metalLayer.framebufferOnly = YES;
-	state->metalLayer.frame = window.contentView.bounds;
-	state->metalLayer.drawableSize = window.contentView.bounds.size;
-
-	state->commandQueue = [[device newCommandQueue] retain];
-	// state->commandQueue = commandQueue;
-	// [commandQueue retain];
-	// video.commandQueue = commandQueue;
 	NSError* error = NULL;
 
 	id<MTLLibrary> lib = [device 
@@ -176,7 +188,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	// desc.rasterSampleCount = 1;
 	desc.vertexFunction = vertex;
 	desc.fragmentFunction = fragment;
-	desc.colorAttachments[0].pixelFormat = state->metalLayer.pixelFormat;
+	desc.colorAttachments[0].pixelFormat = layer.pixelFormat;
 	state->pipeline = [[device
 		newRenderPipelineStateWithDescriptor: desc
 		error: &error
@@ -193,7 +205,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	[desc release];
 
 	MTLTextureDescriptor* texDesc = [[MTLTextureDescriptor alloc] init];
-	texDesc.pixelFormat = state->metalLayer.pixelFormat;
+	texDesc.pixelFormat = layer.pixelFormat;
 	texDesc.width = video.screenSize.x;
 	texDesc.height = video.screenSize.y;
 	texDesc.usage = MTLTextureUsageShaderRead;
@@ -202,11 +214,13 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	[texDesc release];
 	// state->framebufferTexture = texture;
 
-	window.contentView.layer = state->metalLayer;
+	window.contentView.layer = layer;
 }
 
-SYS_FUNC void Sys_OutputFrameAndSync() {
+SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	CAMetalLayer* layer = win->mtlLayer;
+	id<MTLCommandQueue> commandQueue = win->mtlCommandQueue;
 
 	// id<MTLTexture> framebufferTexture = video.framebufferTexture;
 	// CAMetalLayer* metalLayer = video.metalLayer;
@@ -237,14 +251,14 @@ SYS_FUNC void Sys_OutputFrameAndSync() {
 		bytesPerRow: sizeof(u32) * video.screenSize.x
 	];
 
-	id<CAMetalDrawable> drawable = [state->metalLayer nextDrawable];
+	id<CAMetalDrawable> drawable = [layer nextDrawable];
 	// MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
 	// pass.colorAttachments[0].texture = drawable.texture;
 	// pass.colorAttachments[0].loadAction = MTLLoadActionClear;
 	// pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0.5, 0, 1);
 	// pass.colorAttachments[0].storeAction = MTLStoreActionStore;
 
-	id<MTLCommandBuffer> commandBuffer = [state->commandQueue commandBuffer];
+	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 	// id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor: pass];
 	// [encoder setRenderPipelineState: video.pipeline];
 
