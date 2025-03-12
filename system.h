@@ -13,9 +13,9 @@
 // #import <QuartzCore/CAMetalLayer.h>
 // #import <Metal/Metal.h>
 #include <core/core.h>
-#include <core/system.h>
+#include <core/sys.h>
+#include <core/sysvideo.h>
 #include <core/math.h>
-#include <core/sys_video.h>
 
 
 // typedef enum {
@@ -95,8 +95,8 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win);
 // SYS_FUNC void Sys_InitMetal();
 // SYS_FUNC void Sys_PollEvents(window_t* win);
 
-SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
-SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);
+// SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
+// SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);
 SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData);
 char* Sys_GetResourcePath(allocator_t* allocator, char* filename);
 

@@ -4,4 +4,5 @@
 //
 
 #define CORE_IMPL
-#include <core/sys_video.h>
+#include <core/sysvideo.h>
+#include <core/sysaudio.h>

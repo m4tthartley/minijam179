@@ -9,9 +9,10 @@
 #include "font.c"
 #include "system.h"
 
-#include <core/sys_video.h>
+#include <core/sysvideo.h>
+#include <core/sysaudio.h>
 #define CORE_IMPL
-#include <core/system.h>
+#include <core/sys.h>
 #include <core/core.h>
 #include <core/math.h>
 #include <core/font.h>
@@ -19,6 +20,7 @@
 sys_t sys;
 extern video_t video;
 sys_window_t window;
+sysaudio_t audio;
 
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
@@ -93,7 +95,7 @@ void G_Init() {
 	video.screenSize = int2(1280, 800);
 	Sys_InitMetal(&window);
 
-	Sys_InitAudio(NULL);
+	sys_init_audio(&audio, SYSAUDIO_DEFAULT_SPEC);
 
 	float aspect = (float)video.framebufferSize.x / (float)video.framebufferSize.y;
 	video.worldSpaceMin = (vec2_t){-10.0f * aspect, -10.0f};
@@ -108,8 +110,8 @@ void G_Init() {
 
 	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
 
-	// sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
-	// Sys_QueueSound(sys.pianoTest, 0.5f);
+	sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
+	sys_play_sound(&audio, sys.pianoTest, 0.5f);
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {

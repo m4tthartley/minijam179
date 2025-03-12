@@ -12,7 +12,7 @@
 #import <QuartzCore/CAMetalLayer.h>
 
 #include <core/core.h>
-#include <core/sys_video.h>
+#include <core/sysvideo.h>
 #include <core/math.h>
 
 #include "system.h"

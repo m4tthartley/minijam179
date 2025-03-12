@@ -3,7 +3,7 @@
 //  Copyright 2025 GiantJelly. All rights reserved.
 //
 
-#include <core/system.h>
+#include <core/sys.h>
 #include <core/core.h>
 #include "bitmap.h"
 

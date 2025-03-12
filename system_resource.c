@@ -4,7 +4,7 @@
 //
 
 #include <Carbon/Carbon.h>
-#include <core/system.h>
+#include <core/sys.h>
 #include <core/core.h>
 
 char* Sys_GetResourcePath(allocator_t* allocator, char* filename) {
