@@ -62,30 +62,30 @@ typedef struct {
 	// mouse_t mouse;
 } video_t;
 
-typedef struct {
-	union {
-		i16 channels[2];
-		struct {
-			i16 left;
-			i16 right;
-		};
-	};
-} sys_audio_sample_t;
-typedef struct {
-	int channels;
-	int samplesPerSecond;
-	int bytesPerSample;
-	size_t sampleCount;
-	sys_audio_sample_t data[];
-} sys_wave_t;
+// typedef struct {
+// 	union {
+// 		i16 channels[2];
+// 		struct {
+// 			i16 left;
+// 			i16 right;
+// 		};
+// 	};
+// } sys_audio_sample_t;
+// typedef struct {
+// 	int channels;
+// 	int samplesPerSecond;
+// 	int bytesPerSample;
+// 	size_t sampleCount;
+// 	sys_audio_sample_t data[];
+// } sys_wave_t;
 
-typedef struct {
-	sys_wave_t* wave;
-	float cursor;
-	float volume;
-} sys_sound_t;
+// typedef struct {
+// 	sys_wave_t* wave;
+// 	float cursor;
+// 	float volume;
+// } sys_sound_t;
 
-typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* userdata);
+// typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* userdata);
 
 #define SYS_FUNC
 
@@ -97,7 +97,7 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win);
 
 // SYS_FUNC void Sys_QueueSound(sys_wave_t* wave, float volume);
 // SYS_FUNC void Sys_InitAudio(audio_mixer_proc mixerProc);
-SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData);
+// SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData);
 char* Sys_GetResourcePath(allocator_t* allocator, char* filename);
 
 #endif

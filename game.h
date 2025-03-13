@@ -7,6 +7,7 @@
 #define __GAME_H__
 
 #include <core/core.h>
+#include <core/sysaudio.h>
 #include "system.h"
 #include "bitmap.h"
 
@@ -60,7 +61,7 @@ typedef struct {
 	bitmap_t* testBitmap;
 	bitmap_t* fontBitmap;
 	bitmap_t* mapBitmap;
-	sys_wave_t* pianoTest;
+	audio_buffer_t* pianoTest;
 
 	tile_t map[MAP_SIZE*MAP_SIZE];
 	entity_t entities[64];

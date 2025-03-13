@@ -97,3 +97,8 @@ int main() {
 // 	}
 // }
 // #endif
+
+void finished() __attribute__((destructor));
+void finished() {
+	print("Goodbye.");
+}

@@ -122,86 +122,86 @@
 // 	AudioOutputUnitStart(outputUnit);
 // }
 
-#pragma pack(push, 1)
-typedef struct {
-	char ChunkId[4];
-	u32 ChunkSize;
-	char WaveId[4];
-} WavHeader;
-typedef struct {
-	u8 id[4];
-	u32 size;
-	u16 formatTag;
-	u16 channels;
-	u32 samplesPerSec;
-	u32 bytesPerSec;
-	u16 blockAlign;
-	u16 bitsPerSample;
-	u16 cbSize;
-	i16 validBitsPerSample;
-	i32 channelMask;
-	u8 subFormat[16];
-} WavFormatChunk;
-typedef struct {
-	char id[4];
-	u32 size;
-	void *data;
-	char padByte;
-} WavDataChunk;
-#pragma pack(pop)
+// #pragma pack(push, 1)
+// typedef struct {
+// 	char ChunkId[4];
+// 	u32 ChunkSize;
+// 	char WaveId[4];
+// } WavHeader;
+// typedef struct {
+// 	u8 id[4];
+// 	u32 size;
+// 	u16 formatTag;
+// 	u16 channels;
+// 	u32 samplesPerSec;
+// 	u32 bytesPerSec;
+// 	u16 blockAlign;
+// 	u16 bitsPerSample;
+// 	u16 cbSize;
+// 	i16 validBitsPerSample;
+// 	i32 channelMask;
+// 	u8 subFormat[16];
+// } WavFormatChunk;
+// typedef struct {
+// 	char id[4];
+// 	u32 size;
+// 	void *data;
+// 	char padByte;
+// } WavDataChunk;
+// #pragma pack(pop)
 
-SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData) {
-	u8* data = fileData->data;
-	WavHeader *header = (WavHeader*)data;
-	WavFormatChunk *format = NULL;
-	WavDataChunk *dataChunk = NULL;
-	char *f = (char*)(header + 1);
+// SYS_FUNC sys_wave_t* Sys_LoadWave(allocator_t* allocator, file_data_t* fileData) {
+// 	u8* data = fileData->data;
+// 	WavHeader *header = (WavHeader*)data;
+// 	WavFormatChunk *format = NULL;
+// 	WavDataChunk *dataChunk = NULL;
+// 	char *f = (char*)(header + 1);
 
-	if (data) {
-		// Parse file and collect structures
-		while (f < (char*)data + fileData->stat.size) {
-			int id = *(int*)f;
-			u32 size = *(u32*)(f+4);
-			if (id == (('f'<<0)|('m'<<8)|('t'<<16)|(' '<<24))) {
-				format = (WavFormatChunk*)f;
-			}
-			if (id == (('d'<<0)|('a'<<8)|('t'<<16)|('a'<<24))) {
-				dataChunk = (WavDataChunk*)f;
-				dataChunk->data = f + 8;
-			}
-			f += size + 8;
-		}
+// 	if (data) {
+// 		// Parse file and collect structures
+// 		while (f < (char*)data + fileData->stat.size) {
+// 			int id = *(int*)f;
+// 			u32 size = *(u32*)(f+4);
+// 			if (id == (('f'<<0)|('m'<<8)|('t'<<16)|(' '<<24))) {
+// 				format = (WavFormatChunk*)f;
+// 			}
+// 			if (id == (('d'<<0)|('a'<<8)|('t'<<16)|('a'<<24))) {
+// 				dataChunk = (WavDataChunk*)f;
+// 				dataChunk->data = f + 8;
+// 			}
+// 			f += size + 8;
+// 		}
 
-		if (format && dataChunk) {
-			assert(format->channels <= 2);
-			assert(format->bitsPerSample == 16);
-			// assert(dataChunk->size ==);
-			// Possibly check whether to alloc or push
-			sys_wave_t* wave;
-			if(format->channels == 1) {
-				// TODO this is temporary solution
-				wave = alloc_memory(allocator, sizeof(sys_wave_t) + dataChunk->size*2);
-				wave->channels = 2;
-				wave->samplesPerSecond = format->samplesPerSec;
-				wave->bytesPerSample = format->bitsPerSample / 8;
-				wave->sampleCount = dataChunk->size / (wave->channels * wave->bytesPerSample);
-				i16* raw_data = dataChunk->data;
-				sys_audio_sample_t* output = (sys_audio_sample_t*)(wave + 1);
-				FOR(i, wave->sampleCount) {
-					output[i].left = raw_data[i];
-					output[i].right = raw_data[i];
-				}
-			} else {
-				wave = alloc_memory(allocator, sizeof(sys_wave_t) + dataChunk->size);
-				memcpy(wave+1, dataChunk->data, dataChunk->size);
-				wave->channels = format->channels;
-				wave->samplesPerSecond = format->samplesPerSec;
-				wave->bytesPerSample = format->bitsPerSample / 8;
-				wave->sampleCount = dataChunk->size / (wave->channels * wave->bytesPerSample);
-			}
-			return wave;
-		}
-	}
+// 		if (format && dataChunk) {
+// 			assert(format->channels <= 2);
+// 			assert(format->bitsPerSample == 16);
+// 			// assert(dataChunk->size ==);
+// 			// Possibly check whether to alloc or push
+// 			sys_wave_t* wave;
+// 			if(format->channels == 1) {
+// 				// TODO this is temporary solution
+// 				wave = alloc_memory(allocator, sizeof(sys_wave_t) + dataChunk->size*2);
+// 				wave->channels = 2;
+// 				wave->samplesPerSecond = format->samplesPerSec;
+// 				wave->bytesPerSample = format->bitsPerSample / 8;
+// 				wave->sampleCount = dataChunk->size / (wave->channels * wave->bytesPerSample);
+// 				i16* raw_data = dataChunk->data;
+// 				sys_audio_sample_t* output = (sys_audio_sample_t*)(wave + 1);
+// 				FOR(i, wave->sampleCount) {
+// 					output[i].left = raw_data[i];
+// 					output[i].right = raw_data[i];
+// 				}
+// 			} else {
+// 				wave = alloc_memory(allocator, sizeof(sys_wave_t) + dataChunk->size);
+// 				memcpy(wave+1, dataChunk->data, dataChunk->size);
+// 				wave->channels = format->channels;
+// 				wave->samplesPerSecond = format->samplesPerSec;
+// 				wave->bytesPerSample = format->bitsPerSample / 8;
+// 				wave->sampleCount = dataChunk->size / (wave->channels * wave->bytesPerSample);
+// 			}
+// 			return wave;
+// 		}
+// 	}
 
-	return NULL;
-}
+// 	return NULL;
+// }

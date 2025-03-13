@@ -16,6 +16,7 @@
 #include <core/core.h>
 #include <core/math.h>
 #include <core/font.h>
+#include <core/wave.h>
 
 sys_t sys;
 extern video_t video;
@@ -110,8 +111,8 @@ void G_Init() {
 
 	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
 
-	sys.pianoTest = Sys_LoadWave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "/Users/matt/Desktop/piano.wav"));
-	sys_play_sound(&audio, sys.pianoTest, 0.5f);
+	sys.pianoTest = sys_decode_wave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "../resources/piano.wav"));
+	// sys_play_sound(&audio, sys.pianoTest, 0.5f);
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
@@ -306,6 +307,11 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 void G_Update() {
 	// Sys_PollEvents(&window);
 	sys_poll_events(&window);
+
+	sys_set_audio_callback(&audio, NULL);
+	if (window.keyboard[KEY_1].released) {
+		sys_play_sound(&audio, sys.pianoTest, 0.5f);
+	}
 
 	vec2_t cameraSpeed = {0};
 	cameraSpeed.x = (float)window.keyboard[KEY_D].down - (float)window.keyboard[KEY_A].down;
