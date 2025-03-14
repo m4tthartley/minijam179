@@ -9,16 +9,16 @@
 #include "bitmap.h"
 #include "render.h"
 
-extern video_t video;
+extern video_t* video;
 
 int2_t R_ConvertPointToScreenSpace(vec2_t pos) {
 	// int2_t screen = {
-	// 	(pos.x-video.worldSpaceMin.x) / (video.worldSpaceMax.x-video.worldSpaceMin.x) * (float)video.framebufferSize.x,
-	// 	(pos.y-video.worldSpaceMin.y) / (video.worldSpaceMax.y-video.worldSpaceMin.y) * (float)video.framebufferSize.y,
+	// 	(pos.x-video->worldSpaceMin.x) / (video->worldSpaceMax.x-video->worldSpaceMin.x) * (float)video->framebufferSize.x,
+	// 	(pos.y-video->worldSpaceMin.y) / (video->worldSpaceMax.y-video->worldSpaceMin.y) * (float)video->framebufferSize.y,
 	// };
 	int2_t screen = {
-		roundf((pos.x/(video.worldSpace.x) + 0.5f) * (float)video.framebufferSize.x),
-		roundf((pos.y/(video.worldSpace.y) + 0.5f) * (float)video.framebufferSize.y),
+		roundf((pos.x/(video->worldSpace.x) + 0.5f) * (float)video->framebufferSize.x),
+		roundf((pos.y/(video->worldSpace.y) + 0.5f) * (float)video->framebufferSize.y),
 	};
 	return screen;
 }
@@ -30,8 +30,8 @@ void R_ConvertPointsToScreenSpace(int2_t* dest, vec2_t* positions, int num) {
 }
 
 R_FUNC void R_DrawFbmBackground() {
-	u32* fb = video.framebuffer;
-	int2_t framebufferSize = video.framebufferSize;
+	u32* fb = video->framebuffer;
+	int2_t framebufferSize = video->framebufferSize;
 	static int index = 0;
 	FOR (i, framebufferSize.x*framebufferSize.y) {
 		float x = (float)(i%framebufferSize.x + index) * 0.1f;
@@ -51,8 +51,8 @@ R_FUNC void R_DrawFbmBackground() {
 }
 
 R_FUNC void R_DrawNoiseBackground() {
-	u32* fb = video.framebuffer;
-	int2_t framebufferSize = video.framebufferSize;
+	u32* fb = video->framebuffer;
+	int2_t framebufferSize = video->framebufferSize;
 	static float index = 0.0f;
 	FOR (y, framebufferSize.y)
 	FOR (x, framebufferSize.x) {
@@ -73,7 +73,7 @@ R_FUNC void R_DrawNoiseBackground() {
 }
 
 R_FUNC void R_DrawQuad(vec2_t pos, vec2_t size, u32 color) {
-	u32* fb = video.framebuffer;
+	u32* fb = video->framebuffer;
 
 	vec2_t vertices[] = {
 		pos,
@@ -83,21 +83,21 @@ R_FUNC void R_DrawQuad(vec2_t pos, vec2_t size, u32 color) {
 	};
 
 	// int2_t screenPos = {
-	// 	(pos.x-worldSpaceMin.x) / (worldSpaceMax.x-worldSpaceMin.x) * (float)video.framebufferSize.x,
-	// 	(pos.y-worldSpaceMin.y) / (worldSpaceMax.y-worldSpaceMin.y) * (float)video.framebufferSize.y,
+	// 	(pos.x-worldSpaceMin.x) / (worldSpaceMax.x-worldSpaceMin.x) * (float)video->framebufferSize.x,
+	// 	(pos.y-worldSpaceMin.y) / (worldSpaceMax.y-worldSpaceMin.y) * (float)video->framebufferSize.y,
 	// };
 	// int2_t screenSize = {
-	// 	(size.x) / (worldSpaceMax.x-worldSpaceMin.x) * (float)video.framebufferSize.x,
-	// 	(size.y) / (worldSpaceMax.y-worldSpaceMin.y) * (float)video.framebufferSize.y,
+	// 	(size.x) / (worldSpaceMax.x-worldSpaceMin.x) * (float)video->framebufferSize.x,
+	// 	(size.y) / (worldSpaceMax.y-worldSpaceMin.y) * (float)video->framebufferSize.y,
 	// };
 
 	int2_t screenPos[4];
 	R_ConvertPointsToScreenSpace(screenPos, vertices, 4);
 
 	// clip
-	if (screenPos[0].x >= video.framebufferSize.x ||
+	if (screenPos[0].x >= video->framebufferSize.x ||
 		screenPos[1].x < 0 ||
-		screenPos[0].y >= video.framebufferSize.y ||
+		screenPos[0].y >= video->framebufferSize.y ||
 		screenPos[2].y < 0) {
 		// cull
 		return;
@@ -110,43 +110,43 @@ R_FUNC void R_DrawQuad(vec2_t pos, vec2_t size, u32 color) {
 		screenPos[0].y = 0;
 		screenPos[1].y = 0;
 	}
-	if (screenPos[1].x >= video.framebufferSize.x) {
-		screenPos[1].x = video.framebufferSize.x;
-		screenPos[2].x = video.framebufferSize.x;
+	if (screenPos[1].x >= video->framebufferSize.x) {
+		screenPos[1].x = video->framebufferSize.x;
+		screenPos[2].x = video->framebufferSize.x;
 	}
-	if (screenPos[2].y >= video.framebufferSize.y) {
-		screenPos[2].y = video.framebufferSize.y;
-		screenPos[3].y = video.framebufferSize.y;
+	if (screenPos[2].y >= video->framebufferSize.y) {
+		screenPos[2].y = video->framebufferSize.y;
+		screenPos[3].y = video->framebufferSize.y;
 	}
 
 	// int2_t i2 = {}
 	// FOR (y, screenSize.y)
 	// FOR (x, screenSize.x) {
-	// 	int index = (screenPos.y+y)*video.framebufferSize.x + (screenPos.x+x);
+	// 	int index = (screenPos.y+y)*video->framebufferSize.x + (screenPos.x+x);
 	// 	fb[index] = color;
 	// }
 	for (int y=screenPos[0].y; y<screenPos[2].y; ++y)
 	for (int x=screenPos[0].x; x<screenPos[1].x; ++x) {
-		fb[y*video.framebufferSize.x+x] = color;
+		fb[y*video->framebufferSize.x+x] = color;
 	}
 }
 
 R_FUNC void R_DrawQuadOutline(vec2_t pos, vec2_t size, u32 color) {
-	u32* fb = video.framebuffer;
+	u32* fb = video->framebuffer;
 
 	int2_t screenPos = {
-		(pos.x-video.worldSpaceMin.x) / (video.worldSpaceMax.x-video.worldSpaceMin.x) * (float)video.framebufferSize.x,
-		(pos.y-video.worldSpaceMin.y) / (video.worldSpaceMax.y-video.worldSpaceMin.y) * (float)video.framebufferSize.y,
+		(pos.x-video->worldSpaceMin.x) / (video->worldSpaceMax.x-video->worldSpaceMin.x) * (float)video->framebufferSize.x,
+		(pos.y-video->worldSpaceMin.y) / (video->worldSpaceMax.y-video->worldSpaceMin.y) * (float)video->framebufferSize.y,
 	};
 	int2_t screenSize = {
-		(size.x) / (video.worldSpaceMax.x-video.worldSpaceMin.x) * (float)video.framebufferSize.x,
-		(size.y) / (video.worldSpaceMax.y-video.worldSpaceMin.y) * (float)video.framebufferSize.y,
+		(size.x) / (video->worldSpaceMax.x-video->worldSpaceMin.x) * (float)video->framebufferSize.x,
+		(size.y) / (video->worldSpaceMax.y-video->worldSpaceMin.y) * (float)video->framebufferSize.y,
 	};
 
 	// clip
-	if (screenPos.x >= video.framebufferSize.x ||
+	if (screenPos.x >= video->framebufferSize.x ||
 		screenPos.x+screenSize.x < 0 ||
-		screenPos.y >= video.framebufferSize.y ||
+		screenPos.y >= video->framebufferSize.y ||
 		screenPos.y+screenSize.y < 0) {
 		// cull
 		return;
@@ -159,39 +159,39 @@ R_FUNC void R_DrawQuadOutline(vec2_t pos, vec2_t size, u32 color) {
 		screenSize.y -= screenPos.y;
 		screenPos.y = 0;
 	}
-	if ((screenPos.x+screenSize.x) >= video.framebufferSize.x) {
-		screenSize.x = video.framebufferSize.x - screenPos.x;
+	if ((screenPos.x+screenSize.x) >= video->framebufferSize.x) {
+		screenSize.x = video->framebufferSize.x - screenPos.x;
 	}
-	if ((screenPos.y+screenSize.y) >= video.framebufferSize.y) {
-		screenSize.y = video.framebufferSize.y - screenPos.y;
+	if ((screenPos.y+screenSize.y) >= video->framebufferSize.y) {
+		screenSize.y = video->framebufferSize.y - screenPos.y;
 	}
 
 	for (int y=screenPos.y; y<screenPos.y+screenSize.y; ++y) {
-		fb[y*video.framebufferSize.x + (screenPos.x + 0)] = color;
-		fb[y*video.framebufferSize.x + (screenPos.x + screenSize.x - 1)] = color;
+		fb[y*video->framebufferSize.x + (screenPos.x + 0)] = color;
+		fb[y*video->framebufferSize.x + (screenPos.x + screenSize.x - 1)] = color;
 	}
 	for (int x=screenPos.x; x<screenPos.x+screenSize.x; ++x) {
-		fb[(screenPos.y + 0)*video.framebufferSize.x + x] = color;
-		fb[(screenPos.y + screenSize.y - 1)*video.framebufferSize.x + x] = color;
+		fb[(screenPos.y + 0)*video->framebufferSize.x + x] = color;
+		fb[(screenPos.y + screenSize.y - 1)*video->framebufferSize.x + x] = color;
 	}
 	// FOR (x, screenSize.x) {
-	// 	int index = (screenPos.y+y)*video.framebufferSize.x + (screenPos.x+x);
+	// 	int index = (screenPos.y+y)*video->framebufferSize.x + (screenPos.x+x);
 	// 	fb[index] = 0xFFFF0000;
 	// }
 
 	// FOR (y, screenSize.y)
 	// FOR (x, screenSize.x) {
-	// 	int index = (screenPos.y+y)*video.framebufferSize.x + (screenPos.x+x);
+	// 	int index = (screenPos.y+y)*video->framebufferSize.x + (screenPos.x+x);
 	// 	fb[index] = color;
 	// }
 }
 
 R_FUNC void R_BlitBitmap(bitmap_t* bitmap, vec2_t pos) {
 	int2_t screenPos = R_ConvertPointToScreenSpace(pos);
-	u32* fb = video.framebuffer;
+	u32* fb = video->framebuffer;
 	FOR (y, bitmap->height)
 	FOR (x, bitmap->width) {
-		int fbIndex = (screenPos.y+y)*video.framebufferSize.x + (screenPos.x+x);
+		int fbIndex = (screenPos.y+y)*video->framebufferSize.x + (screenPos.x+x);
 		u32 texel = bitmap->data[y*bitmap->width+x];
 		if (texel) {
 			fb[fbIndex] = texel;
@@ -200,9 +200,9 @@ R_FUNC void R_BlitBitmap(bitmap_t* bitmap, vec2_t pos) {
 }
 
 R_FUNC b32 R_Clip(int4_t* clipRect) {
-	if (clipRect->left >= video.framebufferSize.x ||
+	if (clipRect->left >= video->framebufferSize.x ||
 		clipRect->right < 0 ||
-		clipRect->bottom >= video.framebufferSize.y ||
+		clipRect->bottom >= video->framebufferSize.y ||
 		clipRect->top < 0) {
 		// cull
 		return TRUE;
@@ -219,15 +219,15 @@ R_FUNC b32 R_Clip(int4_t* clipRect) {
 		// clipOffset->bottom = abs(clipRect->bottom);
 		clipRect->bottom = 0;
 	}
-	if (clipRect->right >= video.framebufferSize.x) {
-		// size->x = video.framebufferSize.x - clipRect->left;
-		// clipOffset->right = -(clipRect->left+size->x - video.framebufferSize.x);
-		clipRect->right = video.framebufferSize.x;
+	if (clipRect->right >= video->framebufferSize.x) {
+		// size->x = video->framebufferSize.x - clipRect->left;
+		// clipOffset->right = -(clipRect->left+size->x - video->framebufferSize.x);
+		clipRect->right = video->framebufferSize.x;
 	}
-	if ((clipRect->top) >= video.framebufferSize.y) {
-		// size->y = video.framebufferSize.y - clipRect->bottom;
-		// clipOffset->top = -(clipRect->bottom+size->y - video.framebufferSize.y);
-		clipRect->top = video.framebufferSize.y;
+	if ((clipRect->top) >= video->framebufferSize.y) {
+		// size->y = video->framebufferSize.y - clipRect->bottom;
+		// clipOffset->top = -(clipRect->bottom+size->y - video->framebufferSize.y);
+		clipRect->top = video->framebufferSize.y;
 	}
 
 	return FALSE;
@@ -248,13 +248,13 @@ R_FUNC void R_BlitBitmapAtlas(bitmap_t* bitmap, int atlasX, int atlasY, int widt
 	int4_t texelClip = {atlasX, atlasY, atlasX+width, atlasY+height};
 	FOR (i, 4) texelClip.i[i] += clipDiff.i[i];
 
-	u32* fb = video.framebuffer;
+	u32* fb = video->framebuffer;
 	// FOR (y, size.y+clipOffset.top)
 	// FOR (x, size.x+clipOffset.right) {
 	int2_t texelPos = texelClip.xy;
 	for (int y=0; y<(clip.top-clip.bottom); ++y) {
 		for (int x=0; x<(clip.right-clip.left); ++x) {
-			int fbIndex = (clip.bottom+y)*video.framebufferSize.x + (clip.left+x);
+			int fbIndex = (clip.bottom+y)*video->framebufferSize.x + (clip.left+x);
 			u32 texel = bitmap->data[(texelPos.y+y)*bitmap->width+(texelPos.x+x)];
 			if (texel) {
 				fb[fbIndex] = texel;

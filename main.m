@@ -7,20 +7,20 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-// #include "core/platform.h"
-#include "game.h"
-#include "system.h"
-
-#include "system_resource.c"
-
-#define CORE_IMPL
+// #define CORE_IMPL
+#include <core/sys.h>
 #include <core/core.h>
 #include <core/math.h>
+#include <core/sysaudio.h>
 #include <core/hotreload.h>
 // #include <core/platform.h>
 
-extern sys_t sys;
-extern video_t video;
+#include "game.h"
+#include "system.h"
+#include "system_resource.c"
+
+// extern gamestate_t game;
+// extern video_t video;
 
 // int main() {
 // 	print_error("Hello JAM");
@@ -50,8 +50,6 @@ extern video_t video;
 #endif
 
 
-// #ifdef HOTRELOAD
-// hotreload_t hotreload;
 int main() {
 #ifdef __RELEASE__
 	CFBundleRef bundle = CFBundleGetMainBundle();
@@ -67,36 +65,23 @@ int main() {
 #endif
 	Sys_GetResourcePath(NULL, "stdout.log");
 
-	// G_Init();
-	// hotreload_run("game");
-	reload_register_state("sys", /*&sys, sizeof(sys)*/ NULL, sizeof(sys));
-	reload_register_state("video", /*&video, sizeof(video)*/ NULL, sizeof(video));
+	programstate_t* program = sys_alloc_memory(sizeof(programstate_t));
+	sys_zero_memory(program, sizeof(programstate_t));
+
+	reload_register_state("game", NULL, sizeof(gamestate_t*));
+	reload_register_state("video", NULL, sizeof(video_t*));
 	char* gameSoPath = Sys_GetResourcePath(NULL, "game.so");
 	reload_init(gameSoPath);
 
-	reload_run_func("G_Init", NULL);
-	while (/*sys.running*/TRUE) {
-		// if (hotreload.active && hotreload.reload()) {
-		// 	return 0;
-		// }
+	// reload_run_func("G_Init", program);
+	G_Init(program);
+	while (TRUE) {
 		reload_update();
-		// S_Update();
-		reload_run_func("G_Update", NULL);
+		
+		reload_run_func("G_Update", program);
 	}
 }
-// #else
-// int main() {
-// 	if (!hotreload.active || hotreload.init) {
-// 		S_Init();
-// 	}
-// 	while (sys.running) {
-// 		if (hotreload.active && hotreload.reload()) {
-// 			return 0;
-// 		}
-// 		S_Update();
-// 	}
-// }
-// #endif
+
 
 void finished() __attribute__((destructor));
 void finished() {

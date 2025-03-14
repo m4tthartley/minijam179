@@ -70,9 +70,16 @@ typedef struct {
 	int wood;
 	entity_t* selectedWorker;
 	b32 workerDragMode;
-} sys_t;
+} gamestate_t;
 
-void G_Init();
-void G_Update();
+typedef struct {
+	sys_window_t window;
+	sysaudio_t audio;
+	video_t video;
+	gamestate_t game;
+} programstate_t;
+
+void G_Init(programstate_t* program);
+void G_Update(programstate_t* program);
 
 #endif

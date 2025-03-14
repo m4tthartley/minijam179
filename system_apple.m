@@ -33,9 +33,8 @@ typedef struct {
 } sys_objc_state_t;
 
 
-video_t video;
-
-extern sys_t sys;
+extern video_t* video;
+extern gamestate_t* game;
 
 // @interface MetalView : NSView
 // @end
@@ -64,14 +63,14 @@ extern sys_t sys;
 // }
 
 // - (void) keyDown: (NSEvent*) event {
-// 	// assert(event.keyCode < array_size(video.keyboard));
-// 	// _update_button(&video.keyboard[event.keyCode], TRUE);
+// 	// assert(event.keyCode < array_size(video->keyboard));
+// 	// _update_button(&video->keyboard[event.keyCode], TRUE);
 // 	// print("button press");
 // }
 
 // - (void) keyUp: (NSEvent*) event {
-// 	// assert(event.keyCode < array_size(video.keyboard));
-// 	// _update_button(&video.keyboard[event.keyCode], FALSE);
+// 	// assert(event.keyCode < array_size(video->keyboard));
+// 	// _update_button(&video->keyboard[event.keyCode], FALSE);
 // } 
 
 // @end
@@ -127,17 +126,17 @@ NSString* shaderSource =
 // 	// sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 // 	NSWindow* window = win->sysWindow;
 
-// 	video.framebufferSize = int2(320, 200);
-// 	video.framebuffer = malloc(sizeof(u32) * video.framebufferSize.x * video.framebufferSize.y);
-// 	video.scaledFramebuffer = malloc(sizeof(u32) * video.screenSize.x * video.screenSize.y);
+// 	video->framebufferSize = int2(320, 200);
+// 	video->framebuffer = malloc(sizeof(u32) * video->framebufferSize.x * video->framebufferSize.y);
+// 	video->scaledFramebuffer = malloc(sizeof(u32) * video->screenSize.x * video->screenSize.y);
 
-// 	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	NSRect frame = NSMakeRect(0, 0, video->screenSize.x, video->screenSize.y);
 // 	MetalView* metalView = [[[MetalView alloc] initWithFrame: frame] retain];
 // 	[window setContentView: metalView];
 // }
 
 SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	sys_objc_state_t* state = (sys_objc_state_t*)game->objc_state;
 	// NSApplication* app = win->sysApp;
 
 	// Sys_InitMetalView(win);
@@ -147,8 +146,8 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	// state->device = device;
 	// state->metalLayer = [CAMetalLayer layer];
 
-	// // CAMetalLayer* metalLayer = video.metalLayer;
-	// // NSWindow* window = video.window;
+	// // CAMetalLayer* metalLayer = video->metalLayer;
+	// // NSWindow* window = video->window;
 
 	// state->metalLayer.device = device;
 	// state->metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -159,7 +158,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	// state->commandQueue = [[device newCommandQueue] retain];
 	// state->commandQueue = commandQueue;
 	// [commandQueue retain];
-	// video.commandQueue = commandQueue;
+	// video->commandQueue = commandQueue;
 
 	sys_init_metal(win);
 
@@ -167,9 +166,9 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	id<MTLDevice> device = win->mtlDevice;
 	CAMetalLayer* layer = win->mtlLayer;
 
-	video.framebufferSize = int2(320, 200);
-	video.framebuffer = malloc(sizeof(u32) * video.framebufferSize.x * video.framebufferSize.y);
-	video.scaledFramebuffer = malloc(sizeof(u32) * video.screenSize.x * video.screenSize.y);
+	video->framebufferSize = int2(320, 200);
+	video->framebuffer = malloc(sizeof(u32) * video->framebufferSize.x * video->framebufferSize.y);
+	video->scaledFramebuffer = malloc(sizeof(u32) * video->screenSize.x * video->screenSize.y);
 
 	NSError* error = NULL;
 
@@ -197,7 +196,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 		print_error((char*)[[error localizedDescription] UTF8String]);
 		exit(1);
 	}
-	// video.pipeline = pipeline;
+	// video->pipeline = pipeline;
 
 	[lib release];
 	[vertex release];
@@ -206,8 +205,8 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 
 	MTLTextureDescriptor* texDesc = [[MTLTextureDescriptor alloc] init];
 	texDesc.pixelFormat = layer.pixelFormat;
-	texDesc.width = video.screenSize.x;
-	texDesc.height = video.screenSize.y;
+	texDesc.width = video->screenSize.x;
+	texDesc.height = video->screenSize.y;
 	texDesc.usage = MTLTextureUsageShaderRead;
 	texDesc.textureType = MTLTextureType2D;
 	state->framebufferTexture = [[device newTextureWithDescriptor: texDesc] retain];
@@ -218,37 +217,37 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 }
 
 SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
+	sys_objc_state_t* state = (sys_objc_state_t*)game->objc_state;
 	CAMetalLayer* layer = win->mtlLayer;
 	id<MTLCommandQueue> commandQueue = win->mtlCommandQueue;
 
-	// id<MTLTexture> framebufferTexture = video.framebufferTexture;
-	// CAMetalLayer* metalLayer = video.metalLayer;
-	// id<MTLCommandQueue> commandQueue = video.commandQueue;
+	// id<MTLTexture> framebufferTexture = video->framebufferTexture;
+	// CAMetalLayer* metalLayer = video->metalLayer;
+	// id<MTLCommandQueue> commandQueue = video->commandQueue;
 
 	// Scale framebuffer up to window framebuffer size
-	float xd = (float)video.framebufferSize.x / (float)video.screenSize.x;
-	float yd = (float)video.framebufferSize.y / (float)video.screenSize.y;
+	float xd = (float)video->framebufferSize.x / (float)video->screenSize.x;
+	float yd = (float)video->framebufferSize.y / (float)video->screenSize.y;
 	float diff = xd / yd;
-	int relativeWidth = ((float)video.screenSize.y / (float)video.framebufferSize.y) * (float)video.framebufferSize.x; //(float)video.screenSize.x * diff;
-	int xoffset = (video.screenSize.x-relativeWidth)/2;
-	for (int iy=0; iy<video.screenSize.y; ++iy){
+	int relativeWidth = ((float)video->screenSize.y / (float)video->framebufferSize.y) * (float)video->framebufferSize.x; //(float)video->screenSize.x * diff;
+	int xoffset = (video->screenSize.x-relativeWidth)/2;
+	for (int iy=0; iy<video->screenSize.y; ++iy){
 		for (int ix=xoffset; ix<xoffset+relativeWidth; ++ix) {
-			int x = ((float)(ix-xoffset) / relativeWidth) * (float)video.framebufferSize.x;
-			int y = ((float)(iy) / video.screenSize.y) * (float)video.framebufferSize.y;
-			video.scaledFramebuffer[iy*video.screenSize.x+ix] = video.framebuffer[(video.framebufferSize.y-y-1)*video.framebufferSize.x+x];
+			int x = ((float)(ix-xoffset) / relativeWidth) * (float)video->framebufferSize.x;
+			int y = ((float)(iy) / video->screenSize.y) * (float)video->framebufferSize.y;
+			video->scaledFramebuffer[iy*video->screenSize.x+ix] = video->framebuffer[(video->framebufferSize.y-y-1)*video->framebufferSize.x+x];
 		}
 	}
 
 	MTLRegion region = {
 		.origin = {0, 0, 0,},
-		.size = {video.screenSize.x, video.screenSize.y, 1},
+		.size = {video->screenSize.x, video->screenSize.y, 1},
 	};
 	[state->framebufferTexture
 		replaceRegion: region
 		mipmapLevel: 0
-		withBytes: video.scaledFramebuffer
-		bytesPerRow: sizeof(u32) * video.screenSize.x
+		withBytes: video->scaledFramebuffer
+		bytesPerRow: sizeof(u32) * video->screenSize.x
 	];
 
 	id<CAMetalDrawable> drawable = [layer nextDrawable];
@@ -260,9 +259,9 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 
 	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 	// id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor: pass];
-	// [encoder setRenderPipelineState: video.pipeline];
+	// [encoder setRenderPipelineState: video->pipeline];
 
-	// [encoder setFragmentTexture: video.framebufferTexture atIndex:0];
+	// [encoder setFragmentTexture: video->framebufferTexture atIndex:0];
 	// [encoder drawPrimitives: MTLPrimitiveTypeTriangle vertexStart: 0 vertexCount: 3];
 
 	// [encoder endEncoding];
@@ -273,7 +272,7 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 		sourceSlice: 0
 		sourceLevel: 0
 		sourceOrigin: (MTLOrigin){0, 0, 0}
-		sourceSize: (MTLSize){video.screenSize.x, video.screenSize.y, 1}
+		sourceSize: (MTLSize){video->screenSize.x, video->screenSize.y, 1}
 		toTexture: drawable.texture
 		destinationSlice: 0
 		destinationLevel: 0
@@ -291,28 +290,28 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 // 	sys_objc_state_t* state = (sys_objc_state_t*)sys.objc_state;
 
 // 	state->app = [NSApplication sharedApplication];
-// 	// video.app = app;
+// 	// video->app = app;
 // 	[state->app setActivationPolicy: NSApplicationActivationPolicyRegular];
 // 	// AppDelegate* delegate = [[AppDelegate alloc] init];
-// 	// [video.app setDelegate: delegate];
-// 	// [video.app run];
+// 	// [video->app setDelegate: delegate];
+// 	// [video->app run];
 
 // 	// 320x200
 // 	// 640x400
 // 	// 1280x800
-// 	video.screenSize = int2(1280, 800);
-// 	NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	video->screenSize = int2(1280, 800);
+// 	NSRect frame = NSMakeRect(0, 0, video->screenSize.x, video->screenSize.y);
 // 	state->window = [[
 // 		[NSWindow alloc] initWithContentRect: frame
 // 		styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
 // 		backing: NSBackingStoreBuffered
 // 		defer: NO
 // 	] retain];
-// 	// video.window = window;
+// 	// video->window = window;
 
 // 	AppDelegate* delegate = [[[AppDelegate alloc] init] retain];
 // 	[state->window setDelegate: delegate];
-// 	// NSRect frame = NSMakeRect(0, 0, video.screenSize.x, video.screenSize.y);
+// 	// NSRect frame = NSMakeRect(0, 0, video->screenSize.x, video->screenSize.y);
 // 	[state->window center];
 // 	[state->window makeKeyAndOrderFront: nil];
 // 	[state->app activateIgnoringOtherApps: YES];
@@ -329,14 +328,14 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 // 	NSApplication* app = win->sysApp;
 // 	NSWindow* window = win->sysWindow;
 
-// 	// zero_memory(&video.keyboard, sizeof(video.keyboard));
-// 	// zero_memory(&video.mouse, sizeof(video.mouse));
-// 	FOR (i, array_size(video.keyboard)) {
-// 		_update_button(video.keyboard+i, video.keyboard[i].down);
+// 	// zero_memory(&video->keyboard, sizeof(video->keyboard));
+// 	// zero_memory(&video->mouse, sizeof(video->mouse));
+// 	FOR (i, array_size(video->keyboard)) {
+// 		_update_button(video->keyboard+i, video->keyboard[i].down);
 // 	}
 
-// 	_update_button(&video.mouse.left, video.mouse.left.down);
-// 	_update_button(&video.mouse.right, video.mouse.right.down);
+// 	_update_button(&video->mouse.left, video->mouse.left.down);
+// 	_update_button(&video->mouse.right, video->mouse.right.down);
 
 // 	NSEvent* event;
 // 	while ((event = [app nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: YES])) {
@@ -346,26 +345,26 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 // 		}
 
 // 		if (event.type == NSEventTypeKeyDown) {
-// 			assert(event.keyCode < array_size(video.keyboard));
-// 			_update_button(&video.keyboard[event.keyCode], TRUE);
-// 			// print("key state %i %i %i", video.keyboard[event.keyCode].down, video.keyboard[event.keyCode].pressed, video.keyboard[event.keyCode].released);
+// 			assert(event.keyCode < array_size(video->keyboard));
+// 			_update_button(&video->keyboard[event.keyCode], TRUE);
+// 			// print("key state %i %i %i", video->keyboard[event.keyCode].down, video->keyboard[event.keyCode].pressed, video->keyboard[event.keyCode].released);
 // 		}
 // 		if (event.type == NSEventTypeKeyUp) {
-// 			assert(event.keyCode < array_size(video.keyboard));
-// 			_update_button(&video.keyboard[event.keyCode], FALSE);
+// 			assert(event.keyCode < array_size(video->keyboard));
+// 			_update_button(&video->keyboard[event.keyCode], FALSE);
 // 		}
 
 // 		if (event.type == NSEventTypeLeftMouseDown) {
-// 			_update_button(&video.mouse.left, TRUE);
+// 			_update_button(&video->mouse.left, TRUE);
 // 		}
 // 		if (event.type == NSEventTypeLeftMouseUp) {
-// 			_update_button(&video.mouse.left, FALSE);
+// 			_update_button(&video->mouse.left, FALSE);
 // 		}
 // 		if (event.type == NSEventTypeRightMouseDown) {
-// 			_update_button(&video.mouse.left, TRUE);
+// 			_update_button(&video->mouse.left, TRUE);
 // 		}
 // 		if (event.type == NSEventTypeRightMouseUp) {
-// 			_update_button(&video.mouse.left, FALSE);
+// 			_update_button(&video->mouse.left, FALSE);
 // 		}
 		
 // 		[app sendEvent: event];
@@ -375,6 +374,6 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
 // 	NSPoint mousePos = [NSEvent mouseLocation];
 // 	// mousePos = [state->window convertScreenToBase: mousePos]; // needed for old mac versions
 // 	mousePos = [window convertPointFromScreen: mousePos];
-// 	video.mouse.pos.x = mousePos.x;
-// 	video.mouse.pos.y = mousePos.y;
+// 	video->mouse.pos.x = mousePos.x;
+// 	video->mouse.pos.y = mousePos.y;
 // }

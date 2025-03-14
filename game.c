@@ -17,11 +17,12 @@
 #include <core/math.h>
 #include <core/font.h>
 #include <core/wave.h>
+#include <core/hotreload.h>
 
-sys_t sys;
-extern video_t video;
-sys_window_t window;
-sysaudio_t audio;
+sys_window_t* window;
+sysaudio_t* audio;
+video_t* video;
+gamestate_t* game;
 
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
@@ -57,7 +58,7 @@ vec2_t G_ScreenSpaceToTileSpace(vec2_t pos) {
 }
 
 b32 G_PointOnTile(tile_t* tile, vec2_t point) {
-	point = add2(point, sys.cameraPos);
+	point = add2(point, game->cameraPos);
 	float height = (float)tile->height;
 	if ((point.x*0.5f) - (point.y - (height*0.5f)) > tile->pos.x &&
 		(point.x*0.5f) - (point.y - (height*0.5f)) < (tile->pos.x+1) &&
@@ -73,9 +74,9 @@ void G_GenTower(int2_t pos, float energy) {
 		pos.y < 0 || pos.y >= MAP_SIZE) {
 		return;
 	}
-	sys.map[pos.y*MAP_SIZE+pos.x].building.type = TILE_BUILDING_TOWER;
-	sys.map[pos.y*MAP_SIZE+pos.x].building.varient = randr(0, 3);
-	sys.map[pos.y*MAP_SIZE+pos.x].building.health = 1.0f;
+	game->map[pos.y*MAP_SIZE+pos.x].building.type = TILE_BUILDING_TOWER;
+	game->map[pos.y*MAP_SIZE+pos.x].building.varient = randr(0, 3);
+	game->map[pos.y*MAP_SIZE+pos.x].building.health = 1.0f;
 
 	if (energy > 0.0f) {
 		G_GenTower(int2(pos.x+1, pos.y), energy - (0.5f + randf()*0.5f));
@@ -85,49 +86,54 @@ void G_GenTower(int2_t pos, float energy) {
 	}
 }
 
-void G_Init() {
+void G_Init(programstate_t* program) {
 	// if (!sys_message_box("Green Energy", "Are you sure you want to play?", "Play", "Quit")) {
 	// 	exit(0);
 	// }
 
-	sys.running = TRUE;
+	window = &program->window;
+	audio = &program->audio;
+	video = &program->video;
+	game = &program->game;
+
+	game->running = TRUE;
 	// Sys_InitWindow();
-	window = sys_init_window("Green Energy", 1280, 800, WINDOW_CENTERED);
-	video.screenSize = int2(1280, 800);
-	Sys_InitMetal(&window);
+	sys_init_window(window, "Green Energy", 1280, 800, WINDOW_CENTERED);
+	video->screenSize = int2(1280, 800);
+	Sys_InitMetal(window);
 
-	sys_init_audio(&audio, SYSAUDIO_DEFAULT_SPEC);
+	sys_init_audio(audio, SYSAUDIO_DEFAULT_SPEC);
 
-	float aspect = (float)video.framebufferSize.x / (float)video.framebufferSize.y;
-	video.worldSpaceMin = (vec2_t){-10.0f * aspect, -10.0f};
-	video.worldSpaceMax = (vec2_t){10.0f * aspect, 10.0f};
-	video.worldSpace = (vec2_t){(float)video.framebufferSize.x / 8.0f, (float)video.framebufferSize.y / 8.0f};
+	float aspect = (float)video->framebufferSize.x / (float)video->framebufferSize.y;
+	video->worldSpaceMin = (vec2_t){-10.0f * aspect, -10.0f};
+	video->worldSpaceMax = (vec2_t){10.0f * aspect, 10.0f};
+	video->worldSpace = (vec2_t){(float)video->framebufferSize.x / 8.0f, (float)video->framebufferSize.y / 8.0f};
 
-	sys.assetMemory = virtual_heap_allocator(MB(10), NULL);
-	sys.scratchBuffer = virtual_bump_allocator(MB(1), NULL);
+	game->assetMemory = virtual_heap_allocator(MB(10), NULL);
+	game->scratchBuffer = virtual_bump_allocator(MB(1), NULL);
 
-	sys.testBitmap = LoadBitmap(&sys.assetMemory, Sys_GetResourcePath(NULL, "assets/test.bmp"));
-	sys.mapBitmap = LoadBitmap(&sys.assetMemory, Sys_GetResourcePath(NULL, "assets/map.bmp"));
+	game->testBitmap = LoadBitmap(&game->assetMemory, Sys_GetResourcePath(NULL, "assets/test.bmp"));
+	game->mapBitmap = LoadBitmap(&game->assetMemory, Sys_GetResourcePath(NULL, "assets/map.bmp"));
 
-	sys.fontBitmap = Fnt_GenBitmap(&sys.assetMemory, &FONT_DEFAULT);
+	game->fontBitmap = Fnt_GenBitmap(&game->assetMemory, &FONT_DEFAULT);
 
-	sys.pianoTest = sys_decode_wave(&sys.assetMemory, ReadEntireFile(&sys.assetMemory, "../resources/piano.wav"));
-	// sys_play_sound(&audio, sys.pianoTest, 0.5f);
+	game->pianoTest = sys_decode_wave(&game->assetMemory, ReadEntireFile(&game->assetMemory, "../resources/piano.wav"));
+	// sys_play_sound(&audio, game->pianoTest, 0.5f);
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
 		float height = fbm(vec2((float)x*0.05f + 1.0f, (float)y*0.05f + 1.0f)) * 40.0f;
-		sys.map[y*MAP_SIZE+x].pos = int2(x, y);
-		sys.map[y*MAP_SIZE+x].height = height;
+		game->map[y*MAP_SIZE+x].pos = int2(x, y);
+		game->map[y*MAP_SIZE+x].height = height;
 
 		if (rand2d(vec2(x, y)) > 0.9f) {
-			sys.map[y*MAP_SIZE+x].building.type = TILE_BUILDING_TREE;
-			sys.map[y*MAP_SIZE+x].building.health = 1.0f;
+			game->map[y*MAP_SIZE+x].building.type = TILE_BUILDING_TREE;
+			game->map[y*MAP_SIZE+x].building.health = 1.0f;
 		}
 
 		// float buildingChance = fbm(vec2((float)x*0.2f + 123456.0f, (float)y*0.2f + 123456.0f));
 		// if (buildingChance > 0.7f) {
-		// 	sys.map[y*MAP_SIZE+x].buildingType = TILE_BUILDING_TOWER;
+		// 	game->map[y*MAP_SIZE+x].buildingType = TILE_BUILDING_TOWER;
 		// }
 	}
 	
@@ -156,13 +162,13 @@ R_FUNC void R_BlitFontBitmaps(bitmap_t* bitmap, font_text_t* text, vec2_t pos) {
 }
 
 tile_t* G_GetTile(int2_t pos) {
-	return sys.map + (pos.y*MAP_SIZE + pos.x);
+	return game->map + (pos.y*MAP_SIZE + pos.x);
 }
 
 void G_AddEntity(entity_type_t type, int2_t pos) {
-	FOR (i, array_size(sys.entities)) {
-		if (sys.entities[i].type == ENTITY_NONE) {
-			sys.entities[i] = (entity_t){
+	FOR (i, array_size(game->entities)) {
+		if (game->entities[i].type == ENTITY_NONE) {
+			game->entities[i] = (entity_t){
 				.type = type,
 				.tilePos = pos,
 				.nextTileDest = pos,
@@ -212,7 +218,7 @@ path_t G_GetNextTileFromPath(int2_t pos, path_queue_node_t node) {
 	}
 
 	path_t path = {
-		.tiles = push_memory(&sys.scratchBuffer, sizeof(int2_t)*node.depth),
+		.tiles = push_memory(&game->scratchBuffer, sizeof(int2_t)*node.depth),
 		.length = node.depth,
 	};
 
@@ -270,7 +276,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 			int2_t dir = pathDirs[i+1];
 			int2_t tile = int2(node.x+dir.x, node.y+dir.y);
 			if (tile.large == dest.large &&
-				sys.map[tile.y*MAP_SIZE+tile.x].building.type != TILE_BUILDING_NONE) {
+				game->map[tile.y*MAP_SIZE+tile.x].building.type != TILE_BUILDING_NONE) {
 				return G_GetNextTileFromPath(pos, node);
 			}
 
@@ -278,7 +284,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 				tile.x < MAP_SIZE &&
 				tile.y >= 0 &&
 				tile.y < MAP_SIZE &&
-				sys.map[tile.y*MAP_SIZE+tile.x].building.type == TILE_BUILDING_NONE) {
+				game->map[tile.y*MAP_SIZE+tile.x].building.type == TILE_BUILDING_NONE) {
 				if (!(pathNodes[tile.y*MAP_SIZE+tile.x].data & 0x1)) {
 					pathNodes[tile.y*MAP_SIZE+tile.x].data |= 0x1;
 					pathNodes[tile.y*MAP_SIZE+tile.x].data |= (i+1)<<1;
@@ -296,7 +302,7 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 	}
 
 	print("Path was not calculated");
-	int2_t* pathMem = push_memory(&sys.scratchBuffer, sizeof(pos));
+	int2_t* pathMem = push_memory(&game->scratchBuffer, sizeof(pos));
 	sys_copy_memory(pathMem, &pos, sizeof(pos));
 	return (path_t){
 		.tiles = pathMem,
@@ -304,38 +310,42 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 	};
 }
 
-void G_Update() {
-	// Sys_PollEvents(&window);
-	sys_poll_events(&window);
+void G_Update(programstate_t* program) {
+	window = &program->window;
+	audio = &program->audio;
+	video = &program->video;
+	game = &program->game;
+	
+	sys_poll_events(window);
 
-	sys_set_audio_callback(&audio, NULL);
-	if (window.keyboard[KEY_1].released) {
-		sys_play_sound(&audio, sys.pianoTest, 0.5f);
+	sys_set_audio_callback(audio, NULL);
+	if (window->keyboard[KEY_1].released) {
+		sys_play_sound(audio, game->pianoTest, 0.5f);
 	}
 
 	vec2_t cameraSpeed = {0};
-	cameraSpeed.x = (float)window.keyboard[KEY_D].down - (float)window.keyboard[KEY_A].down;
-	cameraSpeed.y = (float)window.keyboard[KEY_W].down - (float)window.keyboard[KEY_S].down;
-	sys.cameraPos = add2(sys.cameraPos, mul2f(cameraSpeed, 0.25f));
-	if (window.keyboard[KEY_S].down) {
+	cameraSpeed.x = (float)window->keyboard[KEY_D].down - (float)window->keyboard[KEY_A].down;
+	cameraSpeed.y = (float)window->keyboard[KEY_W].down - (float)window->keyboard[KEY_S].down;
+	game->cameraPos = add2(game->cameraPos, mul2f(cameraSpeed, 0.25f));
+	if (window->keyboard[KEY_S].down) {
 		int x = 0;
 	}
 
 	tile_t* highlightedTile = NULL;
 
 	vec2_t mouseInWorldSpace = vec2(
-		((float)window.mouse.pos.x/video.screenSize.x - 0.5f) * video.worldSpace.x,
-		((float)window.mouse.pos.y/video.screenSize.y - 0.5f) * video.worldSpace.y
+		((float)window->mouse.pos.x/video->screenSize.x - 0.5f) * video->worldSpace.x,
+		((float)window->mouse.pos.y/video->screenSize.y - 0.5f) * video->worldSpace.y
 	);
 	mouseInWorldSpace = sub2(mouseInWorldSpace, vec2(0.0f, 1.5f));
-	vec2_t mouseTile = G_ScreenSpaceToTileSpace(sub2(mouseInWorldSpace, sys.cameraPos));
+	vec2_t mouseTile = G_ScreenSpaceToTileSpace(sub2(mouseInWorldSpace, game->cameraPos));
 	
-	R_DrawQuad(vec2(-video.worldSpace.x/2, -video.worldSpace.y/2), vec2(video.worldSpace.x, video.worldSpace.y), 0xFF000000);
+	R_DrawQuad(vec2(-video->worldSpace.x/2, -video->worldSpace.y/2), vec2(video->worldSpace.x, video->worldSpace.y), 0xFF000000);
 
-	// R_BlitBitmap(sys.mapBitmap, vec2(0, 0));
+	// R_BlitBitmap(game->mapBitmap, vec2(0, 0));
 	for (int y=MAP_SIZE-1; y>-1; --y)
 	FOR (x, MAP_SIZE) {
-		tile_t* tile = sys.map + (y*MAP_SIZE+x);
+		tile_t* tile = game->map + (y*MAP_SIZE+x);
 		// vec2_t pos = vec2(
 		// 	((float)x*1.0f)+((float)y*1.0f),
 		// 	((float)y*0.5f)-((float)x*0.5f)+((float)tile->height*0.5f)
@@ -349,68 +359,68 @@ void G_Update() {
 		if (tile->building.type != TILE_BUILDING_NONE) {
 			if (tile->building.health <= 0.0f) {
 				tile->building.type = TILE_BUILDING_NONE;
-				sys.wood += 5;
+				game->wood += 5;
 			}
 		}
 		
 		vec2_t pos = G_TileSpaceToScreenSpace(vec2(x, y), tile->height);
-		R_BlitBitmapAtlas(sys.mapBitmap, 0, 0, 16, 16, sub2(pos, sys.cameraPos));
+		R_BlitBitmapAtlas(game->mapBitmap, 0, 0, 16, 16, sub2(pos, game->cameraPos));
 		// if (highlighted) {
-		// 	R_BlitBitmapAtlas(sys.mapBitmap, 16, 0, 16, 16, sub2(pos, sys.cameraPos));
+		// 	R_BlitBitmapAtlas(game->mapBitmap, 16, 0, 16, 16, sub2(pos, game->cameraPos));
 		// }
 
 		if (tile->building.type == TILE_BUILDING_TREE) {
-			R_BlitBitmapAtlas(sys.mapBitmap, 48+32, 0, 16, 32, sub2(pos, sys.cameraPos));
+			R_BlitBitmapAtlas(game->mapBitmap, 48+32, 0, 16, 32, sub2(pos, game->cameraPos));
 		}
 		if (tile->building.type == TILE_BUILDING_TOWER) {
-			// R_BlitBitmapAtlas(sys.mapBitmap, 48+32, 0, 16, 32, sub2(pos, sys.cameraPos));
-			R_BlitBitmapAtlas(sys.mapBitmap, 80+(16*tile->building.varient), 32, 16, 48, sub2(pos, sys.cameraPos));
+			// R_BlitBitmapAtlas(game->mapBitmap, 48+32, 0, 16, 32, sub2(pos, game->cameraPos));
+			R_BlitBitmapAtlas(game->mapBitmap, 80+(16*tile->building.varient), 32, 16, 48, sub2(pos, game->cameraPos));
 		}
 	}
 
 	// Highlight tile
 	if (highlightedTile) {
-		if (window.keyboard[KEY_E].released) {
+		if (window->keyboard[KEY_E].released) {
 			G_AddEntity(ENTITY_WORKER, highlightedTile->pos);
 		}
 
-		if (window.mouse.left.pressed) {
-			FOR (i, array_size(sys.entities)) {
-				if (sys.entities[i].tilePos.large == highlightedTile->pos.large) {
-					sys.workerDragMode = TRUE;
-					sys.selectedWorker = sys.entities + i;
+		if (window->mouse.left.pressed) {
+			FOR (i, array_size(game->entities)) {
+				if (game->entities[i].tilePos.large == highlightedTile->pos.large) {
+					game->workerDragMode = TRUE;
+					game->selectedWorker = game->entities + i;
 					break;
 				}
 			}
 		}
-		if (window.mouse.left.released) {
-			if (sys.workerDragMode && sys.selectedWorker) {
-				sys.selectedWorker->tileDest = highlightedTile->pos;
-				sys.selectedWorker->job = highlightedTile->pos;
-				sys.workerDragMode = FALSE;
+		if (window->mouse.left.released) {
+			if (game->workerDragMode && game->selectedWorker) {
+				game->selectedWorker->tileDest = highlightedTile->pos;
+				game->selectedWorker->job = highlightedTile->pos;
+				game->workerDragMode = FALSE;
 			}
 		}
 
-		if (sys.workerDragMode && sys.selectedWorker) {
-			path_t path = G_PathFind(sys.selectedWorker->tilePos, highlightedTile->pos);
+		if (game->workerDragMode && game->selectedWorker) {
+			path_t path = G_PathFind(game->selectedWorker->tilePos, highlightedTile->pos);
 			FOR (i, path.length) {
-				tile_t* tile = &sys.map[path.tiles[i].y*MAP_SIZE+path.tiles[i].x];
+				tile_t* tile = &game->map[path.tiles[i].y*MAP_SIZE+path.tiles[i].x];
 				vec2_t pos = G_TileSpaceToScreenSpace(vec2(tile->pos.x, tile->pos.y), tile->height);
-				R_BlitBitmapAtlas(sys.mapBitmap, 16, 0, 16, 16, sub2(pos, sys.cameraPos));
+				R_BlitBitmapAtlas(game->mapBitmap, 16, 0, 16, 16, sub2(pos, game->cameraPos));
 			}
 		} else {
 			vec2_t pos = G_TileSpaceToScreenSpace(vec2(highlightedTile->pos.x, highlightedTile->pos.y), highlightedTile->height);
-			R_BlitBitmapAtlas(sys.mapBitmap, 16, 0, 16, 16, sub2(pos, sys.cameraPos));
+			R_BlitBitmapAtlas(game->mapBitmap, 16, 0, 16, 16, sub2(pos, game->cameraPos));
 		}
 	}
 
-	// if (!video.mouse.left.down) {
-	// 	sys.workerDragMode = FALSE;
+	// if (!video->mouse.left.down) {
+	// 	game->workerDragMode = FALSE;
 	// }
 
 	// Entities
-	FOR (i, array_size(sys.entities)) {
-		entity_t* entity = sys.entities + i;
+	FOR (i, array_size(game->entities)) {
+		entity_t* entity = game->entities + i;
 		if (entity->type == ENTITY_WORKER) {
 			if (entity->tilePos.x != entity->nextTileDest.x || entity->tilePos.y != entity->nextTileDest.y) {
 				entity->aniMove += 0.05f;
@@ -431,7 +441,7 @@ void G_Update() {
 					// }
 					// print_inline("\n");
 
-					if (path.length==1 && sys.map[path.tiles[0].y*MAP_SIZE+path.tiles[0].x].building.type!=TILE_BUILDING_NONE) {
+					if (path.length==1 && game->map[path.tiles[0].y*MAP_SIZE+path.tiles[0].x].building.type!=TILE_BUILDING_NONE) {
 						entity->tileDest = entity->tilePos;
 						entity->nextTileDest = entity->tilePos;
 					} else {
@@ -446,88 +456,88 @@ void G_Update() {
 
 			int2_t diff = idiff2(entity->tilePos, entity->job);
 			if (diff.x >= -1 && diff.x <= 1 && diff.y >= -1 && diff.y <= 1) {
-				sys.map[entity->job.y*MAP_SIZE+entity->job.x].building.health -= 0.01f;
+				game->map[entity->job.y*MAP_SIZE+entity->job.x].building.health -= 0.01f;
 			}
 
-			tile_t* tile = &sys.map[entity->tilePos.y*MAP_SIZE+entity->tilePos.x];
+			tile_t* tile = &game->map[entity->tilePos.y*MAP_SIZE+entity->tilePos.x];
 			vec2_t pos = G_TileSpaceToScreenSpace(vec2(
 				entity->tilePos.x + ((float)entity->nextTileDest.x-entity->tilePos.x)*entity->aniMove,
 				entity->tilePos.y + ((float)entity->nextTileDest.y-entity->tilePos.y)*entity->aniMove
 			), tile->height);
-			R_BlitBitmapAtlas(sys.mapBitmap, (int)entity->aniFrame*16, 112, 16, 16, sub2(add2(pos, vec2(0, 1.25f)), sys.cameraPos));
+			R_BlitBitmapAtlas(game->mapBitmap, (int)entity->aniFrame*16, 112, 16, 16, sub2(add2(pos, vec2(0, 1.25f)), game->cameraPos));
 		}
 	}
 
 	// char* testStr = "Old Tom Bombadil is a merry fellow\nBright blue his jacket is and his boots are yellow\nReeds by the shady pool, lilies on the water\nOld Tom Bombadil and the river-daughter";
-	// font_text_t* text = Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, testStr, (font_settings_t){20});
-	// R_BlitFontBitmaps(sys.fontBitmap, text, vec2(-19.0f, 10.0f));
+	// font_text_t* text = Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, testStr, (font_settings_t){20});
+	// R_BlitFontBitmaps(game->fontBitmap, text, vec2(-19.0f, 10.0f));
 
-	str_set_allocator(&sys.scratchBuffer);
+	str_set_allocator(&game->scratchBuffer);
 
 	R_BlitFontBitmaps(
-		sys.fontBitmap, 
-		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("Wood: %i", sys.wood), (font_settings_t){100}),
+		game->fontBitmap, 
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("Wood: %i", game->wood), (font_settings_t){100}),
 		vec2(-19.0f, 11.0f)
 	);
 
 	R_BlitFontBitmaps(
-		sys.fontBitmap, 
-		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse pos: %i, %i", window.mouse.pos.x, window.mouse.pos.y), (font_settings_t){100}),
+		game->fontBitmap, 
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse pos: %i, %i", window->mouse.pos.x, window->mouse.pos.y), (font_settings_t){100}),
 		vec2(-19.0f, 10.0f)
 	);
 	R_BlitFontBitmaps(
-		sys.fontBitmap, 
-		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse dt: %i, %i", window.mouse.pos_dt.x, window.mouse.pos_dt.y), (font_settings_t){100}),
+		game->fontBitmap, 
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse dt: %i, %i", window->mouse.pos_dt.x, window->mouse.pos_dt.y), (font_settings_t){100}),
 		vec2(-19.0f, 9.0f)
 	);
 	R_BlitFontBitmaps(
-		sys.fontBitmap, 
-		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window.mouse.wheel_dt), (font_settings_t){100}),
+		game->fontBitmap, 
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window->mouse.wheel_dt), (font_settings_t){100}),
 		vec2(-19.0f, 8.0f)
 	);
 	R_BlitFontBitmaps(
-		sys.fontBitmap, 
-		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse buttons: %i, %i", (int)window.mouse.left.down, (int)window.mouse.right.down), (font_settings_t){100}),
+		game->fontBitmap, 
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse buttons: %i, %i", (int)window->mouse.left.down, (int)window->mouse.right.down), (font_settings_t){100}),
 		vec2(-19.0f, 7.0f)
 	);
 
 	// R_BlitFontBitmaps(
-	// 	sys.fontBitmap, 
-	// 	Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse pos %f,%f", mouseInWorldSpace.x, mouseInWorldSpace.y), (font_settings_t){100}),
+	// 	game->fontBitmap, 
+	// 	Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse pos %f,%f", mouseInWorldSpace.x, mouseInWorldSpace.y), (font_settings_t){100}),
 	// 	vec2(-19.0f, 11.0f)
 	// );
 	// R_BlitFontBitmaps(
-	// 	sys.fontBitmap, 
-	// 	Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("mouse tile %f, %f", mouseTile.x, mouseTile.y), (font_settings_t){100}),
+	// 	game->fontBitmap, 
+	// 	Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse tile %f, %f", mouseTile.x, mouseTile.y), (font_settings_t){100}),
 	// 	vec2(-19.0f, 10.0f)
 	// );
 	// R_BlitFontBitmaps(
-	// 	sys.fontBitmap, 
-	// 	Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("w down %u", video.keyboard[KEY_W].down), (font_settings_t){100}),
+	// 	game->fontBitmap, 
+	// 	Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("w down %u", video->keyboard[KEY_W].down), (font_settings_t){100}),
 	// 	vec2(-19.0f, 9.0f)
 	// );
 	// R_BlitFontBitmaps(
-	// 	sys.fontBitmap, 
-	// 	Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("tile0 height %i", sys.map[0].height), (font_settings_t){100}),
+	// 	game->fontBitmap, 
+	// 	Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("tile0 height %i", game->map[0].height), (font_settings_t){100}),
 	// 	vec2(-19.0f, 8.0f)
 	// );
 	// vec2_t pos = G_TileSpaceToScreenSpace(vec2(0, 0), /*tile->height*/0);
 	// R_BlitFontBitmaps(
-	// 	sys.fontBitmap, 
-	// 	Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("tile0 pos %f,%f", pos.x, pos.y), (font_settings_t){100}),
+	// 	game->fontBitmap, 
+	// 	Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("tile0 pos %f,%f", pos.x, pos.y), (font_settings_t){100}),
 	// 	vec2(-19.0f, 7.0f)
 	// );
 
-	// if (sys.selectedWorker) {
+	// if (game->selectedWorker) {
 	// 	R_BlitFontBitmaps(
-	// 		sys.fontBitmap, 
-	// 		Fnt_Text(&sys.scratchBuffer, &FONT_DEFAULT, str_format("worker %i,%i", sys.selectedWorker->tilePos.x, sys.selectedWorker->tilePos.y), (font_settings_t){100}),
+	// 		game->fontBitmap, 
+	// 		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("worker %i,%i", game->selectedWorker->tilePos.x, game->selectedWorker->tilePos.y), (font_settings_t){100}),
 	// 		vec2(-19.0f, 6.0f)
 	// 	);
 	// }
 	
-	// clear_allocator(&sys.scratchBuffer);
-	sys.scratchBuffer.stackptr = 0;
-	sys_zero_memory(sys.scratchBuffer.address, sys.scratchBuffer.size);
-	Sys_OutputFrameAndSync(&window);
+	// clear_allocator(&game->scratchBuffer);
+	game->scratchBuffer.stackptr = 0;
+	sys_zero_memory(game->scratchBuffer.address, game->scratchBuffer.size);
+	Sys_OutputFrameAndSync(window);
 }

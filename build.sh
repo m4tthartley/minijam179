@@ -13,5 +13,5 @@ mkdir -p ./build
 
 clang -g -I../core $files $libs $options -o ./build/game.so --shared
 echo "game.so built"
-clang -g -I../core main.m $libs $options -o ./build/jam -DHOTRELOAD
+clang -g -I../core main.m game.c render.c bitmap.c system_apple.m system.m $libs $options -o ./build/jam -DHOTRELOAD
 echo "jam built"
