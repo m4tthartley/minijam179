@@ -6,7 +6,7 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-#include <core/core.h>
+// #include <core/core.h>
 #include <core/sysaudio.h>
 #include "system.h"
 #include "bitmap.h"
@@ -52,7 +52,7 @@ typedef struct {
 #define MAP_SIZE 64
 
 typedef struct {
-	b32 running;
+	_Bool running;
 	allocator_t assetMemory;
 	allocator_t scratchBuffer;
 
@@ -70,14 +70,15 @@ typedef struct {
 	b32 workerDragMode;
 } gamestate_t;
 
-typedef struct {
-	sys_window_t window;
-	sysaudio_t audio;
-	video_t video;
-	gamestate_t game;
-} programstate_t;
+// typedef struct {
+// 	sys_window_t window;
+// 	sysaudio_t audio;
+// 	video_t video;
+// 	gamestate_t game;
+// 	_Bool initialized;
+// } programstate_t;
 
-void G_Init(programstate_t* program);
-void G_Update(programstate_t* program);
+void G_Init(sys_window_t* window);
+void G_Update(sys_window_t* window);
 
 #endif

@@ -47,6 +47,8 @@ typedef struct {
 	// /*id<MTLCommandQueue>*/ void* commandQueue;
 	// /*id<MTLRenderPipelineState>*/ void* pipeline;
 
+	
+
 	u8 objc_state[128];
 
 	int2_t screenSize;
@@ -59,35 +61,7 @@ typedef struct {
 	vec2_t worldSpaceMin;
 	vec2_t worldSpaceMax;
 	vec2_t worldSpace;
-
-	// button_t keyboard[256];
-	// mouse_t mouse;
 } video_t;
-
-// typedef struct {
-// 	union {
-// 		i16 channels[2];
-// 		struct {
-// 			i16 left;
-// 			i16 right;
-// 		};
-// 	};
-// } sys_audio_sample_t;
-// typedef struct {
-// 	int channels;
-// 	int samplesPerSecond;
-// 	int bytesPerSample;
-// 	size_t sampleCount;
-// 	sys_audio_sample_t data[];
-// } sys_wave_t;
-
-// typedef struct {
-// 	sys_wave_t* wave;
-// 	float cursor;
-// 	float volume;
-// } sys_sound_t;
-
-// typedef void (*audio_mixer_proc)(void* outputStream, int sampleCount, void* userdata);
 
 #define SYS_FUNC
 

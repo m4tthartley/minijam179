@@ -5,7 +5,13 @@
 
 set -e
 
-files="game.c render.c bitmap.c system_resource.c system.m"
+# Sub process version
+# files="main_sub_process.m game.c render.c bitmap.c system_resource.c system.m system_apple.m"
+# hostfiles="main_host_process.m system_apple.m"
+
+files="game.c render.c bitmap.c system_resource.c"
+hostfiles="main.m system_apple.m"
+
 libs="-framework Cocoa -framework QuartzCore -framework Metal -framework AudioToolbox"
 options="-fno-objc-arc"
 
@@ -13,5 +19,5 @@ mkdir -p ./build
 
 clang -g -I../core $files $libs $options -o ./build/game.so --shared
 echo "game.so built"
-clang -g -I../core main.m game.c render.c bitmap.c system_apple.m system.m $libs $options -o ./build/jam -DHOTRELOAD
+clang -g -I../core $hostfiles $libs $options -o ./build/jam -DHOTRELOAD
 echo "jam built"
