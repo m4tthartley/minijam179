@@ -135,8 +135,8 @@ NSString* shaderSource =
 // 	[window setContentView: metalView];
 // }
 
-SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)game->objc_state;
+SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
+	sys_objc_state_t* state = (sys_objc_state_t*)video->objc_state;
 	// NSApplication* app = win->sysApp;
 
 	// Sys_InitMetalView(win);
@@ -216,8 +216,8 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win) {
 	window.contentView.layer = layer;
 }
 
-SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win) {
-	sys_objc_state_t* state = (sys_objc_state_t*)game->objc_state;
+SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win, video_t* video) {
+	sys_objc_state_t* state = (sys_objc_state_t*)video->objc_state;
 	CAMetalLayer* layer = win->mtlLayer;
 	id<MTLCommandQueue> commandQueue = win->mtlCommandQueue;
 

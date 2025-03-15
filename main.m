@@ -7,17 +7,18 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-// #define CORE_IMPL
 #include <core/sys.h>
 #include <core/core.h>
 #include <core/math.h>
 #include <core/sysaudio.h>
 #include <core/hotreload.h>
-// #include <core/platform.h>
 
 #include "game.h"
 #include "system.h"
 #include "system_resource.c"
+
+#define CORE_IMPL
+#include <core/sysvideo.h>
 
 // extern gamestate_t game;
 // extern video_t video;
@@ -67,6 +68,10 @@ int main() {
 
 	programstate_t* program = sys_alloc_memory(sizeof(programstate_t));
 	sys_zero_memory(program, sizeof(programstate_t));
+	
+	sys_init_window(&program->window, "Green Energy", 1280, 800, WINDOW_CENTERED);
+	program->video.screenSize = int2(1280, 800);
+	Sys_InitMetal(&program->window, &program->video);
 
 	reload_register_state("game", NULL, sizeof(gamestate_t*));
 	reload_register_state("video", NULL, sizeof(video_t*));
@@ -78,7 +83,11 @@ int main() {
 	while (TRUE) {
 		reload_update();
 		
+		sys_poll_events(&program->window);
+
 		reload_run_func("G_Update", program);
+
+		Sys_OutputFrameAndSync(&program->window, &program->video);
 	}
 }
 

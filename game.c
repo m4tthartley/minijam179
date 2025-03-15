@@ -3,6 +3,8 @@
 //  Copyright 2025 GiantJelly. All rights reserved.
 //
 
+#include <objc/runtime.h>
+
 #include "game.h"
 #include "render.h"
 #include "bitmap.h"
@@ -23,6 +25,15 @@ sys_window_t* window;
 sysaudio_t* audio;
 video_t* video;
 gamestate_t* game;
+
+void ObjcDebug() {
+	int numClasses = objc_getClassList(NULL, 0);
+	Class* classes = sys_alloc_memory(sizeof(Class)*numClasses);
+	objc_getClassList(classes, numClasses);
+	FOR (i, numClasses) {
+		print("objc class: %s", class_getName(classes[i]));
+	}
+}
 
 file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 	file_data_t* result = NULL;
@@ -97,10 +108,6 @@ void G_Init(programstate_t* program) {
 	game = &program->game;
 
 	game->running = TRUE;
-	// Sys_InitWindow();
-	sys_init_window(window, "Green Energy", 1280, 800, WINDOW_CENTERED);
-	video->screenSize = int2(1280, 800);
-	Sys_InitMetal(window);
 
 	sys_init_audio(audio, SYSAUDIO_DEFAULT_SPEC);
 
@@ -310,13 +317,17 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 	};
 }
 
+_Bool classesPrinted = FALSE;
 void G_Update(programstate_t* program) {
 	window = &program->window;
 	audio = &program->audio;
 	video = &program->video;
 	game = &program->game;
-	
-	sys_poll_events(window);
+
+	if (!classesPrinted) {
+		classesPrinted = TRUE;
+		ObjcDebug();
+	}
 
 	sys_set_audio_callback(audio, NULL);
 	if (window->keyboard[KEY_1].released) {
@@ -497,7 +508,7 @@ void G_Update(programstate_t* program) {
 	);
 	R_BlitFontBitmaps(
 		game->fontBitmap, 
-		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("mouse buttons: %i, %i", (int)window->mouse.left.down, (int)window->mouse.right.down), (font_settings_t){100}),
+		Fnt_Text(&game->scratchBuffer, &FONT_DEFAULT, str_format("ASD QWEQWE mouse buttons: %i, %i", (int)window->mouse.left.down, (int)window->mouse.right.down), (font_settings_t){100}),
 		vec2(-19.0f, 7.0f)
 	);
 
@@ -539,5 +550,4 @@ void G_Update(programstate_t* program) {
 	// clear_allocator(&game->scratchBuffer);
 	game->scratchBuffer.stackptr = 0;
 	sys_zero_memory(game->scratchBuffer.address, game->scratchBuffer.size);
-	Sys_OutputFrameAndSync(window);
 }

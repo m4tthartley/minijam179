@@ -52,8 +52,6 @@ typedef struct {
 #define MAP_SIZE 64
 
 typedef struct {
-	u8 objc_state[128];
-
 	b32 running;
 	allocator_t assetMemory;
 	allocator_t scratchBuffer;

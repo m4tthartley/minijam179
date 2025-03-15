@@ -47,6 +47,8 @@ typedef struct {
 	// /*id<MTLCommandQueue>*/ void* commandQueue;
 	// /*id<MTLRenderPipelineState>*/ void* pipeline;
 
+	u8 objc_state[128];
+
 	int2_t screenSize;
 	int2_t framebufferSize;
 
@@ -89,8 +91,8 @@ typedef struct {
 
 #define SYS_FUNC
 
-SYS_FUNC void Sys_InitMetal(sys_window_t* win);
-SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win);
+SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video);
+SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win, video_t* video);
 // SYS_FUNC void Sys_InitWindow();
 // SYS_FUNC void Sys_InitMetal();
 // SYS_FUNC void Sys_PollEvents(window_t* win);
