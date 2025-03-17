@@ -47,9 +47,8 @@ typedef struct {
 	// /*id<MTLCommandQueue>*/ void* commandQueue;
 	// /*id<MTLRenderPipelineState>*/ void* pipeline;
 
-	
-
-	u8 objc_state[128];
+	void* mtlPipeline;
+	void* fbTexture;
 
 	int2_t screenSize;
 	int2_t framebufferSize;

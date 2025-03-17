@@ -21,20 +21,6 @@
 #include <core/sysvideo.h>
 
 
-typedef struct {
-	// NSApplication* app;
-	// NSWindow* window;
-
-	// id<MTLDevice> device;
-	// CAMetalLayer* metalLayer;
-	// id<MTLCommandQueue> commandQueue;
-
-	id<MTLRenderPipelineState> pipeline;
-
-	id<MTLTexture> framebufferTexture;
-} sys_objc_state_t;
-
-
 NSString* shaderSource =
 @"#include <metal_stdlib>\n"
 "using namespace metal;\n"
@@ -68,9 +54,6 @@ NSString* shaderSource =
 ;
 
 SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
-	sys_objc_state_t* state = (sys_objc_state_t*)video->objc_state;
-	// sys_window_t* win = &video->window;
-
 	sys_init_metal(win);
 
 	NSWindow* window = win->sysWindow;
@@ -99,15 +82,15 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
 	desc.vertexFunction = vertex;
 	desc.fragmentFunction = fragment;
 	desc.colorAttachments[0].pixelFormat = layer.pixelFormat;
-	state->pipeline = [[device
+
+	id<MTLRenderPipelineState> mtlPipeline = [[device
 		newRenderPipelineStateWithDescriptor: desc
 		error: &error
 	] retain];
-	if (!state->pipeline) {
+	if (!mtlPipeline) {
 		print_error((char*)[[error localizedDescription] UTF8String]);
 		exit(1);
 	}
-	// video->pipeline = pipeline;
 
 	[lib release];
 	[vertex release];
@@ -120,22 +103,18 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
 	texDesc.height = video->screenSize.y;
 	texDesc.usage = MTLTextureUsageShaderRead;
 	texDesc.textureType = MTLTextureType2D;
-	state->framebufferTexture = [[device newTextureWithDescriptor: texDesc] retain];
+	id<MTLTexture> fbTexture = [[device newTextureWithDescriptor: texDesc] retain];
 	[texDesc release];
-	// state->framebufferTexture = texture;
 
+	video->mtlPipeline = mtlPipeline;
+	video->fbTexture = fbTexture;
 	window.contentView.layer = layer;
 }
 
 SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win, video_t* video) {
-	sys_objc_state_t* state = (sys_objc_state_t*)video->objc_state;
-	// sys_window_t* win = &video->window;
 	CAMetalLayer* layer = win->mtlLayer;
 	id<MTLCommandQueue> commandQueue = win->mtlCommandQueue;
-
-	// id<MTLTexture> framebufferTexture = video->framebufferTexture;
-	// CAMetalLayer* metalLayer = video->metalLayer;
-	// id<MTLCommandQueue> commandQueue = video->commandQueue;
+	id<MTLTexture> fbTexture = video->fbTexture;
 
 	// Scale framebuffer up to window framebuffer size
 	float xd = (float)video->framebufferSize.x / (float)video->screenSize.x;
@@ -155,7 +134,7 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win, video_t* video) {
 		.origin = {0, 0, 0,},
 		.size = {video->screenSize.x, video->screenSize.y, 1},
 	};
-	[state->framebufferTexture
+	[fbTexture
 		replaceRegion: region
 		mipmapLevel: 0
 		withBytes: video->scaledFramebuffer
@@ -180,7 +159,7 @@ SYS_FUNC void Sys_OutputFrameAndSync(sys_window_t* win, video_t* video) {
 
 	id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
 	[blitEncoder 
-		copyFromTexture: state->framebufferTexture
+		copyFromTexture: fbTexture
 		sourceSlice: 0
 		sourceLevel: 0
 		sourceOrigin: (MTLOrigin){0, 0, 0}

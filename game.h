@@ -52,6 +52,11 @@ typedef struct {
 #define MAP_SIZE 64
 
 typedef struct {
+	char name[MAX_PATH_LENGTH];
+	audio_buffer_t* buffer;
+} audiotrack_t;
+
+typedef struct {
 	_Bool running;
 	allocator_t assetMemory;
 	allocator_t scratchBuffer;
@@ -59,7 +64,13 @@ typedef struct {
 	bitmap_t* testBitmap;
 	bitmap_t* fontBitmap;
 	bitmap_t* mapBitmap;
+
 	audio_buffer_t* pianoTest;
+	audio_buffer_t* dunka1;
+
+	audiotrack_t audioTracks[64];
+	int audioTrackCount;
+	int selectedTrack;
 
 	tile_t map[MAP_SIZE*MAP_SIZE];
 	entity_t entities[64];

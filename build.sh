@@ -9,7 +9,7 @@ set -e
 # files="main_sub_process.m game.c render.c bitmap.c system_resource.c system.m system_apple.m"
 # hostfiles="main_host_process.m system_apple.m"
 
-files="game.c render.c bitmap.c system_resource.c"
+files="game.c"
 hostfiles="main.m system_apple.m"
 
 libs="-framework Cocoa -framework QuartzCore -framework Metal -framework AudioToolbox"

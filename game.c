@@ -6,12 +6,13 @@
 #include <objc/runtime.h>
 
 #include "game.h"
-#include "render.h"
-#include "bitmap.h"
-#include "font.c"
 #include "system.h"
 
-// #include <core/sysvideo.h>
+#include "render.c"
+#include "bitmap.c"
+#include "font.c"
+#include "system_resource.c"
+
 #define CORE_IMPL
 #include <core/sysaudio.h>
 #include <core/sys.h>
@@ -42,7 +43,10 @@ file_data_t* ReadEntireFile(allocator_t* allocator, char* filename) {
 		stat_t info = sys_stat(file);
 		result = alloc_memory(allocator, sizeof(file_data_t)+info.size);
 		sys_copy_memory(result, &info, sizeof(info));
-		_Bool readResult = sys_read(file, 0, result+1, info.size);
+		size_t readResult = sys_read(file, 0, result+1, info.size);
+		if (readResult != info.size) {
+			return NULL;
+		}
 		sys_close(file);
 	}
 
@@ -96,6 +100,26 @@ void G_GenTower(int2_t pos, float energy) {
 	}
 }
 
+audio_buffer_t* LoadAudioTrack(char* filename) {
+	if (game.audioTrackCount >= array_size(game.audioTracks)) {
+		print_error("Audio track array full");
+		return NULL;
+	}
+
+	// char path[MAX_PATH_LENGTH];
+	char* path = Sys_GetResourcePath(&game.scratchBuffer, filename);
+
+	file_data_t* file = ReadEntireFile(&game.assetMemory, path);
+	if (!file) {
+		print_error("Failed to load file: %s", path);
+		return NULL;
+	}
+	audio_buffer_t* buffer = sys_decode_wave(&game.assetMemory, file);
+	char_copy(game.audioTracks[game.audioTrackCount].name, filename, MAX_PATH_LENGTH);
+	game.audioTracks[game.audioTrackCount++].buffer = buffer;
+	return buffer;
+}
+
 void G_Init(sys_window_t* window) {
 	// if (!sys_message_box("Green Energy", "Are you sure you want to play?", "Play", "Quit")) {
 	// 	exit(0);
@@ -115,7 +139,7 @@ void G_Init(sys_window_t* window) {
 	video.worldSpaceMax = (vec2_t){10.0f * aspect, 10.0f};
 	video.worldSpace = (vec2_t){(float)video.framebufferSize.x / 8.0f, (float)video.framebufferSize.y / 8.0f};
 
-	game.assetMemory = virtual_heap_allocator(MB(10), NULL);
+	game.assetMemory = virtual_heap_allocator(MB(1500), NULL);
 	game.scratchBuffer = virtual_bump_allocator(MB(1), NULL);
 
 	game.testBitmap = LoadBitmap(&game.assetMemory, Sys_GetResourcePath(NULL, "assets/test.bmp"));
@@ -123,8 +147,54 @@ void G_Init(sys_window_t* window) {
 
 	game.fontBitmap = Fnt_GenBitmap(&game.assetMemory, &FONT_DEFAULT);
 
-	game.pianoTest = sys_decode_wave(&game.assetMemory, ReadEntireFile(&game.assetMemory, "../resources/piano.wav"));
+	// game.pianoTest = sys_decode_wave(&game.assetMemory, ReadEntireFile(&game.assetMemory, "../resources/piano.wav"));
 	// sys_play_sound(&audio, game.pianoTest, 0.5f);
+
+	LoadAudioTrack("sine.wav");
+
+	LoadAudioTrack("dunka_16bit_44k.wav");
+	LoadAudioTrack("dunka_8bit_44k.wav");
+	LoadAudioTrack("dunka_32bit_44k.wav");
+	LoadAudioTrack("dunka_24bit_44k.wav");
+	LoadAudioTrack("dunka_32float_44k.wav");
+	LoadAudioTrack("dunka_64float_44k.wav");
+	
+	LoadAudioTrack("dunka_16bit_176k.wav");
+	LoadAudioTrack("dunka_16bit_44k_dolby5.1.wav");
+	LoadAudioTrack("dunka_16bit_48k.wav");
+
+	LoadAudioTrack("5.1_test_new.wav");
+	LoadAudioTrack("7.1_test_new.wav");
+
+
+	uint8_t output[16] = {0};
+	uint8_t buffer[] = {
+		0, 0, 150, /**/ 0, 0, 152,
+		0, 0, 127, /**/ 0, 0, 126,
+		0, 0, 127, /**/ 0, 0, 126,
+		0, 0, 127, /**/ 0, 0, 126,
+	};
+	audio_buffer_t* ab = alloc_memory(&game.assetMemory, sizeof(audio_buffer_t) + sizeof(buffer));
+	sys_copy_memory(ab+1, buffer, sizeof(buffer));
+	*ab = (audio_buffer_t){
+		.sampleCount=4, .sampleRate=44100, .sampleSize=3, .channels=2,
+	};
+	_mix_sample(&audio, output, &(audio_sound_t){
+		.buffer = ab,
+		.cursor = 0.0f,
+		.volume = 0.5f,
+	});
+	_mix_sample(&audio, output+8, &(audio_sound_t){
+		.buffer = ab,
+		.cursor = 1.0f,
+		.volume = 0.5f,
+	});
+	
+	LoadAudioTrack("piano.wav");
+	LoadAudioTrack("organ.wav");
+	LoadAudioTrack("StarWars60.wav");
+	LoadAudioTrack("ImperialMarch60.wav");
+	LoadAudioTrack("PinkPanther60.wav");
 
 	FOR (y, MAP_SIZE)
 	FOR (x, MAP_SIZE) {
@@ -318,19 +388,32 @@ path_t G_PathFind(int2_t pos, int2_t dest) {
 
 _Bool classesPrinted = FALSE;
 void G_Update(sys_window_t* window) {
-	// window = &program->window;
-	// audio = &program->audio;
-	// video = &program->video;
-	// game = &program->game;
-
-	// if (!classesPrinted) {
-	// 	classesPrinted = TRUE;
-	// 	ObjcDebug();
-	// }
+	sys_button_t* keyboard = window->keyboard;
 
 	sys_set_audio_callback(&audio, sysaudio_default_mixer);
 	if (window->keyboard[KEY_1].released) {
 		sys_play_sound(&audio, game.pianoTest, 0.5f);
+	}
+	if (window->keyboard[KEY_2].released) {
+		sys_play_sound(&audio, game.dunka1, 0.5f);
+	}
+
+	if (keyboard[KEY_DOWN].released) {
+		if (game.selectedTrack < game.audioTrackCount-1) {
+			++game.selectedTrack;
+		}
+	}
+	if (keyboard[KEY_UP].released) {
+		if (game.selectedTrack > 0) {
+			--game.selectedTrack;
+		}
+	}
+	if (keyboard[KEY_P].released) {
+		if (audio.music.buffer) {
+			audio.musicFade = _True;
+		} else {
+			sys_play_music(&audio, game.audioTracks[game.selectedTrack].buffer, 0.5f);
+		}
 	}
 
 	vec2_t cameraSpeed = {0};
@@ -484,31 +567,37 @@ void G_Update(sys_window_t* window) {
 
 	str_set_allocator(&game.scratchBuffer);
 
-	R_BlitFontBitmaps(
-		game.fontBitmap, 
-		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("Wood: %i", game.wood), (font_settings_t){100}),
-		vec2(-19.0f, 11.0f)
-	);
+	// R_BlitFontBitmaps(
+	// 	game.fontBitmap, 
+	// 	Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("Wood: %i", game.wood), (font_settings_t){100}),
+	// 	vec2(-19.0f, 11.0f)
+	// );
+
+	// R_BlitFontBitmaps(
+	// 	game.fontBitmap, 
+	// 	Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse pos: %i, %i", window->mouse.pos.x, window->mouse.pos.y), (font_settings_t){100}),
+	// 	vec2(-19.0f, 10.0f)
+	// );
+	// R_BlitFontBitmaps(
+	// 	game.fontBitmap, 
+	// 	Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse dt: %i, %i", window->mouse.pos_dt.x, window->mouse.pos_dt.y), (font_settings_t){100}),
+	// 	vec2(-19.0f, 9.0f)
+	// );
+	// R_BlitFontBitmaps(
+	// 	game.fontBitmap, 
+	// 	Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window->mouse.wheel_dt), (font_settings_t){100}),
+	// 	vec2(-19.0f, 8.0f)
+	// );
+	// R_BlitFontBitmaps(
+	// 	game.fontBitmap, 
+	// 	Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("abc mouse buttons: %i, %i", (int)window->mouse.left.down, (int)window->mouse.right.down), (font_settings_t){100}),
+	// 	vec2(-19.0f, 7.0f)
+	// );
 
 	R_BlitFontBitmaps(
 		game.fontBitmap, 
-		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse pos: %i, %i", window->mouse.pos.x, window->mouse.pos.y), (font_settings_t){100}),
-		vec2(-19.0f, 10.0f)
-	);
-	R_BlitFontBitmaps(
-		game.fontBitmap, 
-		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse dt: %i, %i", window->mouse.pos_dt.x, window->mouse.pos_dt.y), (font_settings_t){100}),
-		vec2(-19.0f, 9.0f)
-	);
-	R_BlitFontBitmaps(
-		game.fontBitmap, 
-		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("mouse wheel: %i", window->mouse.wheel_dt), (font_settings_t){100}),
-		vec2(-19.0f, 8.0f)
-	);
-	R_BlitFontBitmaps(
-		game.fontBitmap, 
-		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("abc mouse buttons: %i, %i", (int)window->mouse.left.down, (int)window->mouse.right.down), (font_settings_t){100}),
-		vec2(-19.0f, 7.0f)
+		Fnt_Text(&game.scratchBuffer, &FONT_DEFAULT, str_format("track %i: %s", game.selectedTrack, game.audioTracks[game.selectedTrack].name), (font_settings_t){100}),
+		vec2(-19.0f, 11.0f)
 	);
 
 	// R_BlitFontBitmaps(

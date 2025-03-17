@@ -34,8 +34,8 @@ char* Sys_GetResourcePath(allocator_t* allocator, char* filename) {
 		return result;
 	}
 
-	// Check parent directory
-	sys_copy_memory(testPath, "../", 4);
+	// Check Resources directory
+	sys_copy_memory(testPath, "../Resources/", 14);
 	char_append(testPath, filename, MAX_PATH_LENGTH);
 	if ((file = sys_open(testPath))) {
 		sys_close(file);
