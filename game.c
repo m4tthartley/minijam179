@@ -151,6 +151,9 @@ void G_Init(sys_window_t* window) {
 	// sys_play_sound(&audio, game.pianoTest, 0.5f);
 
 	LoadAudioTrack("sine.wav");
+	LoadAudioTrack("piano.wav");
+
+	game.pianoTest = game.audioTracks[1].buffer;
 
 	LoadAudioTrack("dunka_16bit_44k.wav");
 	LoadAudioTrack("dunka_8bit_44k.wav");
@@ -190,7 +193,6 @@ void G_Init(sys_window_t* window) {
 		.volume = 0.5f,
 	});
 	
-	LoadAudioTrack("piano.wav");
 	LoadAudioTrack("organ.wav");
 	LoadAudioTrack("StarWars60.wav");
 	LoadAudioTrack("ImperialMarch60.wav");

@@ -15,6 +15,7 @@
 #include <core/sys.h>
 #include <core/sysvideo.h>
 #include <core/sysaudio.h>
+#include <core/terminal.h>
 #include <core/core.h>
 #include <core/math.h>
 #include <core/hotreload.h>
@@ -53,8 +54,104 @@
 sys_window_t window;
 // sysaudio_t audio;
 
+enum {
+	ESCAPE_BLACK = 0,
+	ESCAPE_RED = 1,
+	ESCAPE_GREEN = 2,
+	ESCAPE_YELLOW = 3,
+	ESCAPE_BLUE = 4,
+	ESCAPE_MAGENTA = 5,
+	ESCAPE_CYAN = 6,
+	ESCAPE_WHITE = 7,
+};
+
+enum {
+	ESCAPE_NONE = (1<<0),
+	ESCAPE_BOLD = (1<<1),
+	ESCAPE_DIM = (1<<2),
+	ESCAPE_ITALIC = (1<<3),
+	ESCAPE_UNDERLINE = (1<<4),
+	ESCAPE_BLINK = (1<<5),
+	ESCAPE_INVERTED = (1<<7),
+	ESCAPE_HIDDEN = (1<<8),
+	ESCAPE_STRIKETHROUGH = (1<<9),
+	ESCAPE_END = (1<<10),
+};
+
+ecstr_t escape_code_asd(int color, _Bool bright, _Bool bg, _Bool bold, _Bool underlined) {
+	ecstr_t result = {0};
+
+	int colorCode = 30;
+	if (bright) {
+		colorCode += 60;
+	}
+	if (bg) {
+		colorCode += 10;
+	}
+	snprintf(result.s, 32, "\x1B[%i;%i;%im", (int)bold, underlined?4:0, colorCode+color);
+
+	return result;
+}
+
+uint8_t escape_basic_color(uint8_t color, _Bool bright) {
+
+}
+
+uint8_t escape_256_color(uint8_t r, uint8_t g, uint8_t b) {
+	return 16 + (r*36) + (g*6) + (b);
+}
+
+ecstr_t escape_code_old(int fgColor, int bgColor, _Bool bright, _Bool bold, _Bool underlined) {
+	ecstr_t result = {0};
+
+	int fgColorCode = 30;
+	int bgColorCode = 40;
+	if (bright) {
+		fgColorCode += 60;
+		bgColorCode += 60;
+	}
+
+	snprintf(result.s, 32, "\x1B[%i;%i;%i;%im", (int)bold, underlined?4:0, fgColorCode+fgColor, bgColorCode+bgColor);
+
+	return result;
+}
+
+void escape_code(uint8_t fgColor, uint8_t bgColor, int options) {
+
+	char buffer[64];
+	snprintf(buffer, 64, "\x1B[%i;5;%im\x1B[%i;5;%im", fgColor>=1?38:39, fgColor, bgColor>=1?48:49, bgColor);
+	FOR (i, 32) {
+		if (options & (1 << i)) {
+			snprintf(buffer+strlen(buffer), 64-strlen(buffer), "\x1B[%im", i);
+		}
+	}
+	
+	print(buffer);
+}
+
 
 int main() {
+	escape_code(1, -1, ESCAPE_BOLD);
+	print(" [Hello World] ");
+
+	// ecstr_t ec = escape_code_old(1, 0, 0, _True, _False);
+	// char* ecstr = ec.s;
+	// print(escape_code_old(1, 7, _False, _False, _False).s);
+	// print(" [Hello World] ");
+	// print(escape_code_old(1, 7, _True, _False, _False).s);
+	// print(" [Hello World] ");
+	// print(escape_code_old(2, 0, 1, _True, _True).s);
+	// print(TERM_RESET);
+	// print("\x1B[38;5;093m");
+	// print("\x1B[48;5;198m");
+	// print("HELLO WORLD");
+
+	// FOR (i, 256) {
+	// 	print_inline("\x1B[48;5;%im %i ", i, i);
+	// }
+
+	exit(0);
+
 #ifdef __RELEASE__
 	CFBundleRef bundle = CFBundleGetMainBundle();
 	CFURLRef bundleUrl = CFBundleCopyBundleURL(bundle);
