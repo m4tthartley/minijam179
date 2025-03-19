@@ -66,7 +66,7 @@ enum {
 };
 
 enum {
-	ESCAPE_NONE = (1<<0),
+	ESCAPE_RESET = (1<<0),
 	ESCAPE_BOLD = (1<<1),
 	ESCAPE_DIM = (1<<2),
 	ESCAPE_ITALIC = (1<<3),
@@ -94,7 +94,7 @@ ecstr_t escape_code_asd(int color, _Bool bright, _Bool bg, _Bool bold, _Bool und
 }
 
 uint8_t escape_basic_color(uint8_t color, _Bool bright) {
-
+	return 0;
 }
 
 uint8_t escape_256_color(uint8_t r, uint8_t g, uint8_t b) {
@@ -116,23 +116,46 @@ ecstr_t escape_code_old(int fgColor, int bgColor, _Bool bright, _Bool bold, _Boo
 	return result;
 }
 
-void escape_code(uint8_t fgColor, uint8_t bgColor, int options) {
+void escape_code(int fgColor, int bgColor, int options) {
 
-	char buffer[64];
-	snprintf(buffer, 64, "\x1B[%i;5;%im\x1B[%i;5;%im", fgColor>=1?38:39, fgColor, bgColor>=1?48:49, bgColor);
+	char fgBuffer[16] = {0};
+	char bgBuffer[16] = {0};
+	char optionsBuffer[64] = {0};
+
+	if (fgColor > -1) {
+		snprintf(fgBuffer, 16, "\x1B[38;5;%im", fgColor);
+	} else {
+		snprintf(fgBuffer, 16, "\x1B[39m");
+	}
+	if (bgColor > -1) {
+		snprintf(bgBuffer, 16, "\x1B[48;5;%im", bgColor);
+	} else {
+		snprintf(bgBuffer, 16, "\x1B[49m");
+	}
+
 	FOR (i, 32) {
 		if (options & (1 << i)) {
-			snprintf(buffer+strlen(buffer), 64-strlen(buffer), "\x1B[%im", i);
+			snprintf(optionsBuffer+strlen(optionsBuffer), 64-strlen(optionsBuffer), "\x1B[%im", i);
 		}
 	}
 	
-	print(buffer);
+	print_inline(fgBuffer);
+	print_inline(bgBuffer);
+	print_inline(optionsBuffer);
 }
 
 
 int main() {
-	escape_code(1, -1, ESCAPE_BOLD);
+	escape_code(escape_256_color(2, 4, 5), -1, ESCAPE_BOLD | ESCAPE_STRIKETHROUGH | ESCAPE_ITALIC | ESCAPE_INVERTED);
 	print(" [Hello World] ");
+
+	escape_code(-1, -1, ESCAPE_RESET);
+	print(" Did the reset work? ");
+
+	escape_code(escape_256_color(5, 1, 1), -1, ESCAPE_BOLD | ESCAPE_INVERTED);
+	print(" An error has occurred! ");
+
+	escape_code(-1, -1, ESCAPE_RESET);
 
 	// ecstr_t ec = escape_code_old(1, 0, 0, _True, _False);
 	// char* ecstr = ec.s;
