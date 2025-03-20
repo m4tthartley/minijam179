@@ -15,7 +15,6 @@
 #include <core/sys.h>
 #include <core/sysvideo.h>
 #include <core/sysaudio.h>
-#include <core/terminal.h>
 #include <core/core.h>
 #include <core/math.h>
 #include <core/hotreload.h>
@@ -54,125 +53,63 @@
 sys_window_t window;
 // sysaudio_t audio;
 
-enum {
-	ESCAPE_BLACK = 0,
-	ESCAPE_RED = 1,
-	ESCAPE_GREEN = 2,
-	ESCAPE_YELLOW = 3,
-	ESCAPE_BLUE = 4,
-	ESCAPE_MAGENTA = 5,
-	ESCAPE_CYAN = 6,
-	ESCAPE_WHITE = 7,
-};
 
-enum {
-	ESCAPE_RESET = (1<<0),
-	ESCAPE_BOLD = (1<<1),
-	ESCAPE_DIM = (1<<2),
-	ESCAPE_ITALIC = (1<<3),
-	ESCAPE_UNDERLINE = (1<<4),
-	ESCAPE_BLINK = (1<<5),
-	ESCAPE_INVERTED = (1<<7),
-	ESCAPE_HIDDEN = (1<<8),
-	ESCAPE_STRIKETHROUGH = (1<<9),
-	ESCAPE_END = (1<<10),
-};
+// print_float
+// fmt
+void print_int(char* buf, int len, int32_t num) {
+	// int i = 0;
+	// while (num > 0) {
 
-// ecstr_t escape_code_asd(int color, _Bool bright, _Bool bg, _Bool bold, _Bool underlined) {
-// 	ecstr_t result = {0};
-
-// 	int colorCode = 30;
-// 	if (bright) {
-// 		colorCode += 60;
-// 	}
-// 	if (bg) {
-// 		colorCode += 10;
-// 	}
-// 	snprintf(result.s, 32, "\x1B[%i;%i;%im", (int)bold, underlined?4:0, colorCode+color);
-
-// 	return result;
-// }
-
-uint8_t escape_basic_color(uint8_t color, _Bool bright) {
-	if (bright) {
-		color += 8;
+	// }
+	int ci = 0;
+	if (num < 0) {
+		buf[ci++] = '-';
+		num = abs(num);
 	}
-	return color;
-}
-
-uint8_t escape_256_color(uint8_t r, uint8_t g, uint8_t b) {
-	return 16 + (r*36) + (g*6) + (b);
-}
-
-// ecstr_t escape_code_old(int fgColor, int bgColor, _Bool bright, _Bool bold, _Bool underlined) {
-// 	ecstr_t result = {0};
-
-// 	int fgColorCode = 30;
-// 	int bgColorCode = 40;
-// 	if (bright) {
-// 		fgColorCode += 60;
-// 		bgColorCode += 60;
-// 	}
-
-// 	snprintf(result.s, 32, "\x1B[%i;%i;%i;%im", (int)bold, underlined?4:0, fgColorCode+fgColor, bgColorCode+bgColor);
-
-// 	return result;
-// }
-
-void escape_color(int fgColor, int bgColor) {
-	char fgBuffer[16] = {0};
-	char bgBuffer[16] = {0};
-
-	if (fgColor > -1) {
-		snprintf(fgBuffer, 16, "\x1B[38;5;%im", fgColor);
-	} else {
-		snprintf(fgBuffer, 16, "\x1B[39m");
-	}
-	if (bgColor > -1) {
-		snprintf(bgBuffer, 16, "\x1B[48;5;%im", bgColor);
-	} else {
-		snprintf(bgBuffer, 16, "\x1B[49m");
-	}
-
-	print_inline(fgBuffer);
-	print_inline(bgBuffer);
-}
-
-void escape_mode(int attrs) {
-	char buffer[64] = {0};
-	snprintf(buffer, 64, "\x1B[");
-
-	FOR (i, 32) {
-		if (attrs & (1 << i)) {
-			if (buffer[strlen(buffer)-1] != '[') {
-				buffer[strlen(buffer)+1] = 0;
-				buffer[strlen(buffer)+0] = ';';
-			}
-			snprintf(buffer+strlen(buffer), 64-strlen(buffer), "%i", i);
+	if (num != 0) {
+		int l = log10(abs(num));
+		int x = 0;
+		for (int i=0; i<l+1; ++i) {
+			buf[ci++] = num%10 + '0';
+			num /= 10;
 		}
+	} else {
+		buf[ci++] = '0';
 	}
-
-	snprintf(buffer+strlen(buffer), 64-strlen(buffer), "m");
-	print_inline(buffer);
+	buf[ci++] = 0;
 }
 
 
 int main() {
-	escape_color(-1, escape_basic_color(ESCAPE_BLUE, _False));
-	print(" [Basic Color] ");
-	escape_color(escape_basic_color(ESCAPE_RED, _True), -1);
-	print(" [Basic Color] ");
+	char buffer[64];
+	print_int(buffer, 64, 55);
+	char buffer2[64];
+	print_int(buffer2, 64, 7);
+	char buffer3[64];
+	print_int(buffer3, 64, 0);
+	char buffer4[64];
+	print_int(buffer4, 64, 255);
+	char buffer5[64];
+	print_int(buffer5, 64, -255);
 
-	escape_color(escape_256_color(2, 4, 5), -1);
-	escape_mode(ESCAPE_BOLD | ESCAPE_STRIKETHROUGH | ESCAPE_ITALIC | ESCAPE_INVERTED);
-	print(" [Hello World] ");
+	escape_color_bg(escape_256_color(2, 5, 2));
+	print("\n [Green Energy] \n");
 
-	escape_mode(ESCAPE_RESET);
-	print(" Did the reset work? ");
+	// escape_color(escape_basic_color(ESCAPE_RED, _True));
+	// print(" [Basic Color] ");
 
-	escape_color(escape_256_color(5, 1, 1), -1);
-	escape_mode(ESCAPE_BOLD | ESCAPE_INVERTED);
-	print(" An error has occurred! ");
+	// escape_color(escape_256_color(2, 4, 5));
+	// escape_mode(ESCAPE_BOLD | ESCAPE_STRIKETHROUGH | ESCAPE_ITALIC | ESCAPE_INVERTED);
+	// print(" [Hello World] ");
+
+	// escape_mode(ESCAPE_RESET);
+	// print(" Did the reset work? ");
+
+	// escape_color(escape_256_color(5, 1, 1));
+	// escape_mode(ESCAPE_BOLD | ESCAPE_INVERTED);
+	// print(" An error has occurred! ");
+
+	// print("Player position: @i, %i")
 
 	escape_mode(ESCAPE_RESET);
 
