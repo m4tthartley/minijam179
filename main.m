@@ -5,6 +5,8 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
+#include <math.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 
 #include "game.h"
@@ -59,6 +61,7 @@ sys_window_t window;
 void print_int(char* buf, int len, int32_t num) {
 	// int i = 0;
 	// while (num > 0) {
+	// __builtin_clz()
 
 	// }
 	int ci = 0;
@@ -70,27 +73,117 @@ void print_int(char* buf, int len, int32_t num) {
 		int l = log10(abs(num));
 		int x = 0;
 		for (int i=0; i<l+1; ++i) {
-			buf[ci++] = num%10 + '0';
+			buf[ci + (l-i)] = num%10 + '0';
 			num /= 10;
 		}
+		ci += l+1;
 	} else {
 		buf[ci++] = '0';
 	}
 	buf[ci++] = 0;
 }
 
+int idiv10(int input) {
+	uint32_t n = abs(input);
+	uint64_t tmp = (uint64_t)n * 0xCCCCCCCD;
+	uint32_t q = tmp >> 35;
+
+	// uint32_t signMask = input & 0x80000000;
+	// uint32_t asd = q | signMask;
+	// int result = asd;
+	// return result;
+
+	int result = q;
+	if (input & 0x80000000) {
+		result = 0 - result;
+	}
+	return result;
+}
+
+// Max 32bit: 4,294,967,295
+// Max 64bit: 18,446,744,073,709,551,615
+int _log2to10_tbl[] = {
+	0,0,0,0,1,1,1,2,2,2,3,3,3,3,
+	4,4,4,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9,
+};
+uint64_t _base10_tbl[] = {
+	1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,
+	10000000000,100000000000,1000000000000,10000000000000,
+	100000000000000,1000000000000000,10000000000000000,
+	100000000000000000,1000000000000000000,//10000000000000000000,
+};
+int ilog10(int input) {
+	int value = abs(input);
+	int base2 = 31 - __builtin_clz(value | 1);
+	int base10TblIndex = _log2to10_tbl[base2] + 1;
+	if (value < _base10_tbl[base10TblIndex]) {
+		--base10TblIndex;
+	}
+	int base10 = _base10_tbl[base10TblIndex];
+	if (input & 0x80000000) {
+		base10 = 0 - base10;
+	}
+	return base10;
+}
 
 int main() {
+	// print("log %i", ilog10(99));
+	// print("log %i", ilog10(100));
+	// print("log %i", ilog10(101));
+	// print("log %i", ilog10(120));
+
+	// print("log %i", ilog10(999));
+	// print("log %i", ilog10(1000));
+	// print("log %i", ilog10(1001));
+
+	int NUM = 15;
+	FOR (i, 11) {
+		print("log %i = %i", NUM, ilog10(NUM));
+		NUM *= 10;
+	}
+
+	// FOR (i, 32) {
+	// 	uint32_t num = 1 << i;
+	// 	// print("bit %i, log %i, %i", i, (int)log10(num), num);
+	// 	print_inline("%u,", (uint32_t)log10(num));
+	// }
+	// print("\n");
+
+	// uint64_t bigNum = 1;
+	// while (/*bigNum < 0xFFFFFFFF /*FFFFFFFF*/ TRUE) {
+	// 	print("Num: %llu", bigNum);
+	// 	if (bigNum * 10 < bigNum) {
+	// 		break;
+	// 	}
+	// 	bigNum *= 10;
+	// }
+
 	char buffer[64];
 	print_int(buffer, 64, 55);
-	char buffer2[64];
-	print_int(buffer2, 64, 7);
-	char buffer3[64];
-	print_int(buffer3, 64, 0);
-	char buffer4[64];
-	print_int(buffer4, 64, 255);
-	char buffer5[64];
-	print_int(buffer5, 64, -255);
+	print(buffer);
+
+	print_int(buffer, 64, 7);
+	print(buffer);
+
+	print_int(buffer, 64, 0);
+	print(buffer);
+
+	print_int(buffer, 64, 255);
+	print(buffer);
+
+	print_int(buffer, 64, -255);
+	print(buffer);
+
+	uint32_t num = 237;
+	uint64_t tmp = (uint64_t)num * 0xCCCCCCCD;
+	uint32_t q = tmp >> 35;
+	// result *= 10;
+
+	int a = idiv10(255);
+	int b = idiv10(-255);
+	int c = idiv10(275443);
+	int d = idiv10(-17);
+	int e = idiv10(0);
 
 	escape_color_bg(escape_256_color(2, 5, 2));
 	print("\n [Green Energy] \n");
