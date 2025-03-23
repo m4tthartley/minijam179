@@ -5,6 +5,7 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
+#include <limits.h>
 #include <math.h>
 #include <os/clock.h>
 #include <mach/mach_time.h>
@@ -23,6 +24,7 @@
 #include <core/math.h>
 #include <core/imath.h>
 #include <core/hotreload.h>
+#include <core/print.h>
 
 // extern gamestate_t game;
 // extern video_t video;
@@ -57,30 +59,6 @@
 
 sys_window_t window;
 // sysaudio_t audio;
-
-/*
-	fmtstr
-	format_string
-*/
-
-void print_int(char* buf, int len, int32_t num) {
-	int ci = 0;
-	if (num < 0) {
-		buf[ci++] = '-';
-		num = abs(num);
-	}
-	if (num != 0) {
-		int l = ilog10(num);
-		for (int i=0; i<l+1; ++i) {
-			buf[ci + (l-i)] = num%10 + '0';
-			num /= 10;
-		}
-		ci += l+1;
-	} else {
-		buf[ci++] = '0';
-	}
-	buf[ci++] = 0;
-}
 
 // 86763ll
 // 56399ll
@@ -167,11 +145,82 @@ void PerformanceTesting() {
 	CDivPerfTest();
 }
 
-int main() {
-	PerformanceTesting();
-	exit(0);
 
-	char buffer[64];
+/*
+	fmtstr
+	format_string
+*/
+
+#define print_int sprint_int
+#define print_float sprint_float
+
+void TestFormatting() {
+	for (int i=0; i<100; ++i) {
+		int testInt = randr(0, 0x7FFFFFFF) - 0x7FFFFFFF/2;
+		char mine[16];
+		char libc[16];
+		print_int(mine, 16, testInt);
+		snprintf(libc, 16, "%i", testInt);
+		if (str_compare(mine, libc)) {
+			escape_color(escape_256_color(1, 4, 1));
+			escape_mode(ESCAPE_INVERTED);
+			print(" MATCH [%s] [%s] ", mine, libc);
+		} else {
+			escape_color(escape_256_color(5, 1, 1));
+			escape_mode(ESCAPE_INVERTED);
+			print(" MISMATCH [%s] - [%s] ", mine, libc);
+		}
+	}
+
+	for (int i=0; i<100; ++i) {
+		float testFloat = randfr(-0xFFFF, 0xFFFF);
+		char mine[16];
+		char libc[16];
+		print_float(mine, 16, testFloat, 3);
+		snprintf(libc, 16, "%.3f", testFloat);
+		if (str_compare(mine, libc)) {
+			escape_color(escape_256_color(1, 4, 1));
+			escape_mode(ESCAPE_INVERTED);
+			print(" MATCH [%s] [%s] ", mine, libc);
+		} else {
+			escape_color(escape_256_color(5, 1, 1));
+			escape_mode(ESCAPE_INVERTED);
+			print(" MISMATCH [%s] - [%s] ", mine, libc);
+		}
+	}
+}
+
+
+int main() {
+	char buffer[32];
+
+	sprint(buffer, sizeof(buffer), "int: %i, u32: %u", -556, 0xFFFFFFFF);
+	print(buffer);
+	sprint(buffer, sizeof(buffer), "i64: %li, u64: %lu", -556, (uint64_t)0xFFFFFFFFFFFF);
+	print(buffer);
+	sprint(buffer, sizeof(buffer), "float: %f", 255.123456789);
+	print(buffer);
+
+	int age = 30;
+	char* text = "Matt Hartley";
+	sprint(buffer, sizeof(buffer), "my name is %s, and my age is %i", text, age);
+	print(buffer);
+
+	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 235, 5.0f);
+	print(buffer);
+	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 345321, -5.7f);
+	print(buffer);
+	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -17, 255.455f);
+	print(buffer);
+	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -2334543, -500.12f);
+	print(buffer);
+
+	print_float(buffer, 64, 134.255, 4);
+	print(buffer);
+	print_float(buffer, 64, -345345.245345, 4);
+	print(buffer);
+	print_float(buffer, 64, -34.245345, 4);
+	print(buffer);
 
 	print_int(buffer, 64, 55);
 	print(buffer);
