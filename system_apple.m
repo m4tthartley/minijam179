@@ -14,11 +14,10 @@
 #include <core/core.h>
 #include <core/sysvideo.h>
 #include <core/math.h>
+#include <core/print.h>
 
 #include "system.h"
 #include "game.h"
-
-#include <core/sysvideo.h>
 
 
 NSString* shaderSource =
@@ -71,7 +70,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
 		options:nil
 		error:&error];
 	if (!lib) {
-		print_error((char*)[[error localizedDescription] UTF8String]);
+		print_err((char*)[[error localizedDescription] UTF8String]);
 		exit(1);
 	}
 
@@ -88,7 +87,7 @@ SYS_FUNC void Sys_InitMetal(sys_window_t* win, video_t* video) {
 		error: &error
 	] retain];
 	if (!mtlPipeline) {
-		print_error((char*)[[error localizedDescription] UTF8String]);
+		print_err((char*)[[error localizedDescription] UTF8String]);
 		exit(1);
 	}
 

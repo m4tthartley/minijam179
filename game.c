@@ -5,14 +5,6 @@
 
 #include <objc/runtime.h>
 
-#include "game.h"
-#include "system.h"
-
-#include "render.c"
-#include "bitmap.c"
-#include "font.c"
-#include "system_resource.c"
-
 #define CORE_IMPL
 #include <core/sysaudio.h>
 #include <core/sys.h>
@@ -21,6 +13,17 @@
 #include <core/font.h>
 #include <core/wave.h>
 #include <core/hotreload.h>
+#include <core/print.h>
+#undef CORE_IMPL
+
+#include "game.h"
+#include "system.h"
+
+#include "render.c"
+#include "bitmap.c"
+#include "font.c"
+#include "system_resource.c"
+
 
 sysaudio_t audio;
 video_t video;
@@ -102,7 +105,7 @@ void G_GenTower(int2_t pos, float energy) {
 
 audio_buffer_t* LoadAudioTrack(char* filename) {
 	if (game.audioTrackCount >= array_size(game.audioTracks)) {
-		print_error("Audio track array full");
+		print_err("Audio track array full");
 		return NULL;
 	}
 
@@ -111,7 +114,7 @@ audio_buffer_t* LoadAudioTrack(char* filename) {
 
 	file_data_t* file = ReadEntireFile(&game.assetMemory, path);
 	if (!file) {
-		print_error("Failed to load file: %s", path);
+		print_err("Failed to load file: %s", path);
 		return NULL;
 	}
 	audio_buffer_t* buffer = sys_decode_wave(&game.assetMemory, file);

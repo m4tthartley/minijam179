@@ -5,6 +5,7 @@
 
 #include <core/sys.h>
 #include <core/core.h>
+#include <core/print.h>
 #include "bitmap.h"
 
 bitmap_t* LoadBitmap(allocator_t* allocator, char* filename) {

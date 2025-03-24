@@ -12,10 +12,6 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-#include "game.h"
-// #include "system.h"
-#include "system_resource.c"
-
 #define CORE_IMPL
 #include <core/sys.h>
 #include <core/sysvideo.h>
@@ -25,6 +21,12 @@
 #include <core/imath.h>
 #include <core/hotreload.h>
 #include <core/print.h>
+#undef CORE_IMPL
+
+#include "game.h"
+// #include "system.h"
+#include "system_resource.c"
+
 
 // extern gamestate_t game;
 // extern video_t video;
@@ -95,7 +97,7 @@ void MyLogPerfTest() {
 		++counter;
 	}
 	perf_timer_end(&timer);
-	print_inline("my log time: %ull", timer.duration);
+	print("my log time: %ull", timer.duration);
 	int random = randr(0, VALUE_COUNT);
 	print("  random value at index %i = %i", random, values[random]);
 }
@@ -109,7 +111,7 @@ void CLogPerfTest() {
 		++counter;
 	}
 	perf_timer_end(&timer);
-	print_inline(" C log time: %ull", timer.duration);
+	print(" C log time: %ull", timer.duration);
 	int random = randr(0, VALUE_COUNT);
 	print("  random value at index %i = %i", random, values[random]);
 }
@@ -192,100 +194,72 @@ void TestFormatting() {
 
 
 int main() {
-	char buffer[32];
+	char buffer[64];
 
-	sprint(buffer, sizeof(buffer), "int: %i, u32: %u", -556, 0xFFFFFFFF);
+	sprint(buffer, sizeof(buffer), "int: %i, u32: %u \n", -556, 0xFFFFFFFF);
 	print(buffer);
-	sprint(buffer, sizeof(buffer), "i64: %li, u64: %lu", -556, (uint64_t)0xFFFFFFFFFFFF);
+	sprint(buffer, sizeof(buffer), "i64: %li, u64: %lu \n", -556, (uint64_t)0xFFFFFFFFFFFF);
 	print(buffer);
-	sprint(buffer, sizeof(buffer), "float: %f", 255.123456789);
-	print(buffer);
-
-	int age = 30;
-	char* text = "Matt Hartley";
-	sprint(buffer, sizeof(buffer), "my name is %s, and my age is %i", text, age);
+	sprint(buffer, sizeof(buffer), "float: %f \n", 255.123456789);
 	print(buffer);
 
-	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 235, 5.0f);
-	print(buffer);
-	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 345321, -5.7f);
-	print(buffer);
-	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -17, 255.455f);
-	print(buffer);
-	sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -2334543, -500.12f);
-	print(buffer);
+	// int age = 30;
+	// char* text = "Matt Hartley";
+	// sprint(buffer, sizeof(buffer), "my name is %s, and my age is %i", text, age);
+	// print(buffer);
 
-	print_float(buffer, 64, 134.255, 4);
-	print(buffer);
-	print_float(buffer, 64, -345345.245345, 4);
-	print(buffer);
-	print_float(buffer, 64, -34.245345, 4);
-	print(buffer);
+	// sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 235, 5.0f);
+	// print(buffer);
+	// sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", 345321, -5.7f);
+	// print(buffer);
+	// sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -17, 255.455f);
+	// print(buffer);
+	// sprint(buffer, sizeof(buffer), "The number is %i, do you like it?\nhow about this float %f", -2334543, -500.12f);
+	// print(buffer);
 
-	print_int(buffer, 64, 55);
-	print(buffer);
+	// print_float(buffer, 64, 134.255, 4);
+	// print(buffer);
+	// print_float(buffer, 64, -345345.245345, 4);
+	// print(buffer);
+	// print_float(buffer, 64, -34.245345, 4);
+	// print(buffer);
 
-	print_int(buffer, 64, 7);
-	print(buffer);
+	// print_int(buffer, 64, 55);
+	// print(buffer);
 
-	print_int(buffer, 64, 0);
-	print(buffer);
+	// print_int(buffer, 64, 7);
+	// print(buffer);
 
-	print_int(buffer, 64, 255);
-	print(buffer);
+	// print_int(buffer, 64, 0);
+	// print(buffer);
 
-	print_int(buffer, 64, -255);
-	print(buffer);
+	// print_int(buffer, 64, 255);
+	// print(buffer);
 
-	uint32_t num = 237;
-	uint64_t tmp = (uint64_t)num * 0xCCCCCCCD;
-	uint32_t q = tmp >> 35;
-	// result *= 10;
+	// print_int(buffer, 64, -255);
+	// print(buffer);
 
-	int a = imod10(255);
-	int b = imod10(-255);
-	int c = imod10(275443);
-	int d = imod10(-17);
-	int e = imod10(0);
+	// uint32_t num = 237;
+	// uint64_t tmp = (uint64_t)num * 0xCCCCCCCD;
+	// uint32_t q = tmp >> 35;
 
-	escape_color_bg(escape_256_color(2, 5, 2));
+	// int a = imod10(255);
+	// int b = imod10(-255);
+	// int c = imod10(275443);
+	// int d = imod10(-17);
+	// int e = imod10(0);
+
+	// escape_color_bg(escape_256_color(5, 1, 1));
+	// escape_mode(ESCAPE_INVERTED);
+	// \x1B[38;5;203m
+	// \x1B[7m
+	// sys_print("\x1B[38;5;203;7m");
+	escape_color(escape_256_color(1, 4, 2));
+	escape_mode(ESCAPE_INVERTED);
 	print("\n [Green Energy] \n");
-
-	// escape_color(escape_basic_color(ESCAPE_RED, _True));
-	// print(" [Basic Color] ");
-
-	// escape_color(escape_256_color(2, 4, 5));
-	// escape_mode(ESCAPE_BOLD | ESCAPE_STRIKETHROUGH | ESCAPE_ITALIC | ESCAPE_INVERTED);
-	// print(" [Hello World] ");
-
-	// escape_mode(ESCAPE_RESET);
-	// print(" Did the reset work? ");
-
-	// escape_color(escape_256_color(5, 1, 1));
-	// escape_mode(ESCAPE_BOLD | ESCAPE_INVERTED);
-	// print(" An error has occurred! ");
-
-	// print("Player position: @i, %i")
 
 	escape_mode(ESCAPE_RESET);
 
-	// ecstr_t ec = escape_code_old(1, 0, 0, _True, _False);
-	// char* ecstr = ec.s;
-	// print(escape_code_old(1, 7, _False, _False, _False).s);
-	// print(" [Hello World] ");
-	// print(escape_code_old(1, 7, _True, _False, _False).s);
-	// print(" [Hello World] ");
-	// print(escape_code_old(2, 0, 1, _True, _True).s);
-	// print(TERM_RESET);
-	// print("\x1B[38;5;093m");
-	// print("\x1B[48;5;198m");
-	// print("HELLO WORLD");
-
-	// FOR (i, 256) {
-	// 	print_inline("\x1B[48;5;%im %i ", i, i);
-	// }
-
-	exit(0);
 
 #ifdef __RELEASE__
 	CFBundleRef bundle = CFBundleGetMainBundle();
